@@ -1,0 +1,32 @@
+[
+  {
+    "archivo": "entregables/01-evaluacion/matriz-evaluacion-smart.xlsx",
+    "original": "01_Matriz_evaluacion_SMART.xlsx",
+    "sha256": "C964B7C93022C5F523CB81FD59ED0F3D19F508EE666B99ED6754BAD6605C83C7"
+  },
+  {
+    "archivo": "entregables/02-diseno/analisis-y-solucion-recomendada.docx",
+    "original": "02_Analisis_y_solucion_recomendada.docx",
+    "sha256": "DEBE07EE2CD0EF89AA0EC7737ADF838E220DBE26B5E15F40D4680BC3BE625B99"
+  },
+  {
+    "archivo": "entregables/02-diseno/canvas-smart-glf.docx",
+    "original": "03_Canvas_SMART_GLF.docx",
+    "sha256": "6C85C8A2E606B748C708BE92D46EA90978AA546B2553E451FC56279DED06CB93"
+  },
+  {
+    "archivo": "entregables/01-evaluacion/checklist-smart-glf.docx",
+    "original": "04_Checklist_SMART_GLF.docx",
+    "sha256": "A142DF2643F7E6B1FF9CC8773C4F1234F2A30E751D568D895108F36108CE8061"
+  },
+  {
+    "archivo": "entregables/03-presentacion/guion-pitch-glf.docx",
+    "original": "05_Guion_pitch_GLF.docx",
+    "sha256": "61EFDB886CE5F81DE34E718D96BADA9BA4458A72AF75EF9872B09DB2F36B089F"
+  },
+  {
+    "archivo": "entregables/04-validacion/formulario-especialista-sostenibilidad.docx",
+    "original": "06_Formulario_especialista_Sostenibilidad.docx",
+    "sha256": "2A800E086878EB077F89C1632CD0F3D1BA48186A9F1BC72CBE71446E08F89C61"
+  }
+]
