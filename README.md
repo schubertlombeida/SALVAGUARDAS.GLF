@@ -1,6 +1,6 @@
 # Asistente de riesgos y salvaguardas GLF
 
-Documentación académica del Workshop de Metodología SMART, Semana 1.
+Documentación académica del proyecto, organizada por semana. La primera entrega corresponde al Workshop de Metodología SMART.
 
 **Equipo:** Schubert Lombeida Manjarrez y Niko Dimitri Jiménez Bruno.  
 **Estado:** propuesta y planificación; todavía no contiene una aplicación ni resultados experimentales.
@@ -19,29 +19,27 @@ Se propone comparar una búsqueda BM25 con un modelo de embeddings multilingüe 
 |-- .gitignore
 |-- .gitattributes
 |-- manifest.json
-|-- entregables/
-    |-- 01-evaluacion/
-    |   |-- matriz-evaluacion-smart.xlsx
-    |   |-- checklist-smart-glf.docx
-    |-- 02-diseno/
-    |   |-- analisis-y-solucion-recomendada.docx
-    |   |-- canvas-smart-glf.docx
-    |-- 03-presentacion/
-    |   |-- guion-pitch-glf.docx
-    |-- 04-validacion/
-        |-- formulario-especialista-sostenibilidad.docx
+|-- Semana 1- Workshop de Metodología SMART/
+    |-- 01_Matriz_evaluacion_SMART.xlsx
+    |-- 02_Analisis_y_solucion_recomendada.docx
+    |-- 03_Canvas_SMART_GLF.docx
+    |-- 04_Checklist_SMART_GLF.docx
+    |-- 05_Guion_pitch_GLF.docx
+    |-- 06_Formulario_especialista_Sostenibilidad.docx
 ~~~
 
-## Documentos y orden de lectura
+Cada nueva semana tendrá una carpeta al mismo nivel, con el formato **Semana N- Nombre de la actividad**, y contendrá directamente todos sus entregables. Las carpetas siguientes se incorporarán cuando se conozcan sus actividades.
+
+## Semana 1: documentos y orden de lectura
 
 | Documento | Contenido |
 |---|---|
-| [Análisis y solución recomendada](entregables/02-diseno/analisis-y-solucion-recomendada.docx) | Comparación de opciones, fuentes, alcance, métricas, presupuesto y cronograma. |
-| [Matriz de evaluación SMART](entregables/01-evaluacion/matriz-evaluacion-smart.xlsx) | Tres alternativas, puntuaciones ponderadas y 15 justificaciones. |
-| [Canvas SMART](entregables/02-diseno/canvas-smart-glf.docx) | Objetivo, recursos, riesgos y planificación. |
-| [Checklist SMART](entregables/01-evaluacion/checklist-smart-glf.docx) | Validación documental y condiciones pendientes. |
-| [Guion del pitch](entregables/03-presentacion/guion-pitch-glf.docx) | Texto para ensayar una presentación de aproximadamente tres minutos. |
-| [Formulario para el especialista](entregables/04-validacion/formulario-especialista-sostenibilidad.docx) | Entrevista con Ulf, referencia experta, medición y acuerdos. |
+| [Análisis y solución recomendada](Semana%201-%20Workshop%20de%20Metodolog%C3%ADa%20SMART/02_Analisis_y_solucion_recomendada.docx) | Comparación de opciones, fuentes, alcance, métricas, presupuesto y cronograma. |
+| [Matriz de evaluación SMART](Semana%201-%20Workshop%20de%20Metodolog%C3%ADa%20SMART/01_Matriz_evaluacion_SMART.xlsx) | Tres alternativas, puntuaciones ponderadas y 15 justificaciones. |
+| [Canvas SMART](Semana%201-%20Workshop%20de%20Metodolog%C3%ADa%20SMART/03_Canvas_SMART_GLF.docx) | Objetivo, recursos, riesgos y planificación. |
+| [Checklist SMART](Semana%201-%20Workshop%20de%20Metodolog%C3%ADa%20SMART/04_Checklist_SMART_GLF.docx) | Validación documental y condiciones pendientes. |
+| [Guion del pitch](Semana%201-%20Workshop%20de%20Metodolog%C3%ADa%20SMART/05_Guion_pitch_GLF.docx) | Texto para ensayar una presentación de aproximadamente tres minutos. |
+| [Formulario para el especialista](Semana%201-%20Workshop%20de%20Metodolog%C3%ADa%20SMART/06_Formulario_especialista_Sostenibilidad.docx) | Entrevista con Ulf, referencia experta, medición y acuerdos. |
 
 Descargar los archivos para editarlos en Word y Excel o herramientas compatibles. GitHub conserva los archivos, pero la revisión de diferencias de estos formatos binarios es limitada.
 
@@ -103,3 +101,4 @@ Sustituir USUARIO y NOMBRE-REPOSITORIO por los datos reales. No se ha creado ni 
 ## Alcance de uso
 
 Documentación académica de trabajo. No constituye aprobación institucional, certificación de cumplimiento ni autorización para reutilizar documentos de terceros. No se incorpora una licencia de redistribución porque sus condiciones todavía no han sido definidas.
+
