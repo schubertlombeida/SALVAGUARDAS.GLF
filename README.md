@@ -1,5 +1,43 @@
 # Asistente de riesgos y salvaguardas GLF
 
+**Empezar aquí: [Avance del equipo, pendientes y cómo abrir la web](docs/AVANCE_EQUIPO.md).**
+
+## Estado vigente al 28 de septiembre de 2026
+
+La documentación de semana 1 que figura más abajo es histórica. La referencia actual es [Decisiones vigentes](docs/decisiones_vigentes.md): Recall@5 ≥ 80 %, p95 ≤ 7 segundos y presupuesto máximo USD 200. Los datos comprobados contienen 26 expedientes y la partición 18/4/4. Estas cifras son metas y composición del dataset, no rendimiento medido.
+
+- [Control de versiones](docs/control_versiones.md)
+- [EDA con seis figuras](docs/analisis_datos.md) y [notebook ejecutado](notebooks/01_exploracion.ipynb)
+- [Plan de trabajo](docs/planificacion.md)
+- [Preparación de semana 3](docs/semana_3.md)
+- [Protocolo de evaluación y etiquetado](docs/protocolo_evaluacion.md)
+- [Diseño inicial de interfaz](docs/diseno_interfaz.md)
+
+### Reproducir el EDA
+
+Python 3.11. Instalar dependencias y ejecutar desde la raíz, indicando la ruta de un ZIP autorizado. Los datos privados no están incluidos.
+
+```sh
+python -m pip install -r requirements.txt
+python -m src.eda --archive /ruta/GLF_Galapagos_Datasets_Iniciales.zip
+python -m unittest discover -s tests -v
+```
+
+El notebook también puede ejecutarse con Jupyter configurando `GLF_DATASET_ZIP`. Los resultados agregados se guardan en `results/`. Hay trece pruebas de consistencia, recuperación y API. La web local permite consultar el corpus normativo con BM25; todavía no hay experimento de entrenamiento ni evaluación de relevancia. Los requisitos finales siguen en desarrollo.
+
+### Abrir la web local
+
+Desde la raíz del repositorio, con Python 3.11 o superior:
+
+```sh
+python -m app.server --archive /ruta/GLF_SGAS_Corpus_ES.zip
+```
+
+Abrir http://127.0.0.1:8765. El servidor lee 585 fragmentos del ZIP local sin subirlos a servicios externos. Detener con Ctrl+C. No exponer este servidor de desarrollo a Internet. Véase [guía de la web](docs/web_local.md).
+
+## Documentación histórica de semana 1
+
+
 Documentación académica del proyecto, organizada por semana. La primera entrega corresponde al Workshop de Metodología SMART.
 
 **Equipo:** Schubert Lombeida Manjarrez y Niko Dimitri Jiménez Bruno.  
@@ -102,3 +140,13 @@ Sustituir USUARIO y NOMBRE-REPOSITORIO por los datos reales. No se ha creado ni 
 
 Documentación académica de trabajo. No constituye aprobación institucional, certificación de cumplimiento ni autorización para reutilizar documentos de terceros. No se incorpora una licencia de redistribución porque sus condiciones todavía no han sido definidas.
 
+
+## Preparación de publicación
+
+Servidor WSGI y contenedor preparados. Consulta [despliegue](docs/despliegue.md). Waitress probado localmente con 585 fragmentos; Docker y publicación remota pendientes.
+
+[Búsqueda semántica E5: implementación y pendientes](docs/busqueda_semantica.md). La web continúa usando BM25.
+
+## Notebook de Colab
+
+[02_recuperacion_E5_Colab.ipynb](notebooks/02_recuperacion_E5_Colab.ipynb) es autónomo: instala dependencias, carga ZIP, descarga E5, construye el índice, compara búsquedas y exporta el registro. Preparado y validado estructuralmente; ejecución real pendiente. No sustituye overfitting_analysis.ipynb de semana 3.
