@@ -6,11 +6,12 @@ from pathlib import Path
 from time import perf_counter
 from urllib.parse import urlsplit
 from src.retrieval import load_spanish
+from .ollama import OllamaUnavailable, generate_answer
 
 PAGE = Path(__file__).with_name('index.html')
 
 
-def handler_for(index):
+def handler_for(index, generator=generate_answer):
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *args):
             pass  # No registrar consultas del especialista.
@@ -34,7 +35,7 @@ def handler_for(index):
                 self.reply(404, {'error': 'Ruta no encontrada.'})
 
         def do_POST(self):
-            if self.path != '/api/search':
+            if self.path not in ('/api/search', '/api/ask'):
                 return self.reply(404, {'error': 'Ruta no encontrada.'})
             origin = self.headers.get('Origin')
             if origin and origin != 'http://' + self.headers.get('Host', ''):
@@ -50,8 +51,27 @@ def handler_for(index):
             except (ValueError, UnicodeDecodeError) as error:
                 return self.reply(400, {'error': str(error)})
             started = perf_counter()
-            rows = index.search(query)
-            self.reply(200, {'results': rows, 'seconds': round(perf_counter() - started, 4)})
+            rows = index.search(query, limit=5)
+            retrieval_seconds = round(perf_counter() - started, 4)
+            if self.path == '/api/search':
+                return self.reply(200, {'results': rows, 'seconds': retrieval_seconds})
+            if not rows:
+                return self.reply(200, {'answer': 'La documentación recuperada es insuficiente para responder esta pregunta.',
+                                        'sources': [], 'results': [], 'generated': False,
+                                        'timings': {'retrieval_seconds': retrieval_seconds, 'generation_seconds': 0,
+                                                    'total_seconds': round(perf_counter() - started, 4)}})
+            generation_started = perf_counter()
+            try:
+                answer, sources = generator(query, rows)
+            except OllamaUnavailable as error:
+                return self.reply(503, {'error': str(error), 'results': rows, 'generated': False,
+                                        'timings': {'retrieval_seconds': retrieval_seconds,
+                                                    'generation_seconds': round(perf_counter() - generation_started, 4),
+                                                    'total_seconds': round(perf_counter() - started, 4)}})
+            return self.reply(200, {'answer': answer, 'sources': sources, 'results': rows, 'generated': True,
+                                    'timings': {'retrieval_seconds': retrieval_seconds,
+                                                'generation_seconds': round(perf_counter() - generation_started, 4),
+                                                'total_seconds': round(perf_counter() - started, 4)}})
     return Handler
 
 

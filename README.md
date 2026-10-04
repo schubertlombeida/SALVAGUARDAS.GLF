@@ -1,5 +1,27 @@
 # Asistente de riesgos y salvaguardas GLF
 
+## Chat RAG local (Windows)
+
+Desde **PowerShell**, instala Python 3.11 o superior y Ollama si aún no están instalados. Ollama se instala con `winget install --id Ollama.Ollama -e` o su instalador oficial. Abre Ollama y descarga el modelo una sola vez:
+
+```powershell
+ollama pull qwen2.5:7b
+```
+
+Desde la raíz del repositorio, con el ZIP local autorizado (ajusta `$archivo` si lo guardaste en otro lugar):
+
+```powershell
+python -m pip install -r requirements.txt
+$archivo = 'C:\Users\NIKO\Desktop\Estudios 2025\Maestria Inteligencia Artificial\Proyecto Integrador\GLF_SGAS_Corpus_ES.zip'
+$env:GLF_OLLAMA_URL = 'http://127.0.0.1:11434'
+$env:GLF_OLLAMA_MODEL = 'qwen2.5:7b'
+python -m app.server --archive $archivo
+```
+
+Abre [http://127.0.0.1:8765](http://127.0.0.1:8765) en el navegador. El servidor escucha únicamente en `127.0.0.1`. Usa `POST /api/ask` para BM25 (hasta cinco fragmentos) y una respuesta en español con citas a través del Ollama **local**; «Solo buscar evidencia» conserva `POST /api/search`. Si Ollama está cerrado o no tiene el modelo, la página explica el error y muestra los fragmentos BM25 sin llamarlos respuesta generada. Las preguntas no se registran; solo se envían al proceso Ollama local la pregunta y el contexto recuperado. La generación tiene un límite de espera de 45 segundos y las preguntas admiten hasta 1000 caracteres. Se muestran tiempos separados de recuperación, generación y total; la meta p95 ≤ 7 segundos todavía no está verificada. Para detener el servidor, pulsa Ctrl+C.
+
+El chat de esta sección requiere `python -m app.server`; la configuración WSGI de demostración mantiene únicamente la búsqueda. No se entrenan BM25/E5 ni se modifica el benchmark.
+
 **4 de octubre de 2026:** [gold operativo v2](evaluacion_rag/cambios_gold_v1_a_v2.md) integrado localmente: 50 preguntas, 82 relaciones relevantes y 186 negativas adjudicadas en train/validation. Test (60 candidatos) sigue pendiente y congelado. Las métricas publicadas son históricas del gold v1; no se optimizó el RAG. La [entrega académica de Semana 3](docs/auditoria_entrega_semana3.md) ya está verificada y disponible como ZIP local.
 
 **Etapa actual:** [Semana 3 auditada y ZIP académico limpio](docs/auditoria_entrega_semana3.md); [negativos pendientes y cruces documentales](evaluacion_rag/diagnostico_cruces_y_test.md). El primer bloque de 25 candidatos se guarda localmente para revisión; test v1 no se usa para escoger parámetros.
