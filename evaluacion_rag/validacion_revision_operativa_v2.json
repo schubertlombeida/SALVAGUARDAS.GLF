@@ -10,7 +10,7 @@
     "dataset_pairs_human_reviewed.csv": "932abcd6ff6005de4bc850b51fc73a8a1c3cc29cd709be60371a94b26f1f4fd2"
   },
   "v2_sha256": {
-    "dataset_gold_operational_v2.csv": "971668d15eede67f785d0b6c88b9cef1dfa01460aa2dd5f79e9293e5b112e746",
+    "dataset_gold_operational_v2.csv": "f3421f2343f30930912c7499312fd2120b645b9c11b2e81632bc03bb62f21461",
     "dataset_pairs_operational_v2.csv": "93590ea1fd8082e13779279ee0b5e98a91319e4ca8cdf030d40010abe4f276c1"
   },
   "source_decisions": 192,

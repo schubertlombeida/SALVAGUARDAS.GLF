@@ -13,6 +13,8 @@ Las seis altas positivas son GLF-003/`GLF_ANEXO_G_PLANTILLA_PGAS_ES::0004`, GLF-
 
 `dataset_gold_human_reviewed_v1.csv`, `dataset_pairs_human_reviewed.csv`, el gold IA anterior, el historial de cambios y los resultados de evaluación v1 permanecen intactos. La nueva versión local `dataset_gold_operational_v2.csv` contiene procedencia por chunk; `dataset_pairs_operational_v2.csv` distingue las decisiones operativas del test pendiente. Ambos contienen texto del corpus y se excluyen de Git. El manifiesto público conserva hashes, recuentos y los ID de las seis altas, sin publicar el corpus.
 
+El gold v2 marca `todas_relaciones_confirmadas_individualmente=false` para GLF-026: su nueva relación fue resuelta mediante revisión asistida delegada. El campo `human_reviewed=true` heredado del gold v1 describe el estado histórico de la pregunta, no certifica individualmente esta relación nueva.
+
 Las tres relaciones señaladas en `diagnostico_cruces_y_test.md` se mantienen positivas y no son elegibles para entrenamiento. Ningún par de validation o test queda habilitado para entrenamiento; esta integración no ejecuta entrenamiento ni selección de parámetros. El test v1 ya fue consultado históricamente y **no es ciego**. Los 60 candidatos de test requieren adjudicación independiente; no se etiquetan por inferencia. No se recalcularon métricas: los números anteriores pertenecen al gold v1 y no deben describirse como rendimiento v2.
 
 Para reproducir localmente, con el corpus autorizado y las tres fuentes privadas ya copiadas:

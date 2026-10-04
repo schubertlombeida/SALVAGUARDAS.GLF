@@ -120,6 +120,8 @@ def build(archive, folder):
         row['relevant_chunk_ids'] = json.dumps(approved, ensure_ascii=False)
         row['evidencias_por_chunk'] = json.dumps(evidence, ensure_ascii=False)
         row['procedencia_por_chunk'] = json.dumps(provenance_by_chunk, ensure_ascii=False)
+        row['todas_relaciones_confirmadas_individualmente'] = str(all(
+            origin != 'REVISION_ASISTIDA_DELEGADA_POR_USUARIO' for origin in provenance_by_chunk.values())).lower()
         row['gold_version'] = 'operational_v2'
         gold2.append(row)
     home = {DOCS[alias]: split for alias, split in SPLIT_BY_ALIAS.items()}
