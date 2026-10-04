@@ -5,7 +5,6 @@ import hashlib
 import json
 import re
 from collections import Counter
-from datetime import date
 from pathlib import Path
 
 from src.eda import load_records
@@ -14,6 +13,7 @@ from .question_specs import DOCS
 
 ORIGINAL_SHA256 = 'c3cdc04cc06a9ed2936491498aa373e22f61bea87e8095bd2e9cbb02abe4fe3b'
 NAME = 'dataset_gold_human_reviewed_v1.csv'
+REVIEW_RECORDED_AT = '2026-10-03'
 
 def cid(alias, number):
     return f'{DOCS[alias]}::{number:04d}'
@@ -83,7 +83,7 @@ def build(archive, folder, reviewer='', review_date=''):
         updated['annotation_source']='manual_decisions_supplied_by_user'
         updated['reviewer_name']=reviewer or 'equipo GLF (identidad pendiente)'
         updated['review_date']=review_date
-        updated['review_recorded_at']=date.today().isoformat()
+        updated['review_recorded_at']=REVIEW_RECORDED_AT
         updated['review_date_note']='Fecha real de revisión pendiente de confirmar' if not review_date else 'Fecha declarada por el equipo'
         evidence=[]
         for relevant_id in after:
