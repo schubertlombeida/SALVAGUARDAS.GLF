@@ -1,5 +1,7 @@
 # Asistente de riesgos y salvaguardas GLF
 
+**4 de octubre de 2026:** [gold operativo v2](evaluacion_rag/cambios_gold_v1_a_v2.md) integrado localmente: 50 preguntas, 82 relaciones relevantes y 186 negativas adjudicadas en train/validation. Test (60 candidatos) sigue pendiente y congelado. Las métricas publicadas son históricas del gold v1; no se optimizó el RAG. La [entrega académica de Semana 3](docs/auditoria_entrega_semana3.md) ya está verificada y disponible como ZIP local.
+
 **Etapa actual:** [Semana 3 auditada y ZIP académico limpio](docs/auditoria_entrega_semana3.md); [negativos pendientes y cruces documentales](evaluacion_rag/diagnostico_cruces_y_test.md). El primer bloque de 25 candidatos se guarda localmente para revisión; test v1 no se usa para escoger parámetros.
 
 **Gold humano v1 registrado:** 50 preguntas y 76 relaciones relevantes según decisiones manuales comunicadas por el usuario. [Impacto de la revisión](evaluacion_rag/impacto_revision_humana.md) y [trazabilidad para el proyecto final](evaluacion_rag/trazabilidad_proyecto_final.md). La entrega de [Semana 3](docs/auditoria_entrega_semana3.md) permanece separada; test no se usó para optimizar. Los CSV con texto del corpus se guardan localmente, fuera del GitHub público.

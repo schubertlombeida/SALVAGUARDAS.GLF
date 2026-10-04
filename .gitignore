@@ -34,3 +34,6 @@ evaluacion_rag/resultados_por_pregunta_human_v1.csv
 evaluacion_rag/revision_negativos_pendientes.csv
 evaluacion_rag/bloque_revision_01.csv
 evaluacion_rag/revision_negativos_test_independiente.csv
+evaluacion_rag/private/
+evaluacion_rag/dataset_gold_operational_v2.csv
+evaluacion_rag/dataset_pairs_operational_v2.csv

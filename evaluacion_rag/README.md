@@ -1,5 +1,9 @@
 # Evaluación del recuperador RAG de Salvaguardas GLF
 
+## Gold operativo v2 — 4 de octubre de 2026
+
+Se integraron 192 decisiones de train/validation: seis nuevas relaciones relevantes y 186 negativas, con 166 confirmaciones individuales del usuario y 26 resoluciones asistidas delegadas por él. El gold local pasa de 76 a **82 relaciones relevantes**. Los 60 candidatos de test siguen pendientes. Consulta [diferencias y procedencia](cambios_gold_v1_a_v2.md) y el [manifiesto de validación](validacion_revision_operativa_v2.json). No se recalcularon métricas ni se entrenó o ajustó el recuperador; todos los resultados listados más abajo corresponden al gold **v1**. Los archivos v2 con texto y las tres fuentes de revisión quedan solo en el equipo local.
+
 ## Baseline con gold humano v1 — 3 de octubre de 2026
 
 **Siguiente revisión, sin optimizar:** [diagnóstico de negativos, cruces y test](diagnostico_cruces_y_test.md). `revision_negativos_pendientes.csv` reúne 252 candidatos con texto; `bloque_revision_01.csv` contiene los primeros 25 de train/validation; `inventario_bloques_negativos.csv` enumera los demás; `revision_negativos_test_independiente.csv` deja test separado y con rankings ocultos. Todos los CSV con texto son locales. Se generan con `python -m evaluacion_rag.prepare_negative_review` a partir de archivos ya existentes, sin ejecutar de nuevo recuperación ni alterar métricas.
