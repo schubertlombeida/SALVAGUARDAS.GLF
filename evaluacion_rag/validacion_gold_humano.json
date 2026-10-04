@@ -1,0 +1,24 @@
+{
+  "preguntas_esperadas": 50,
+  "preguntas_en_archivo": 50,
+  "relevantes_total": 76,
+  "relevantes_por_split": {
+    "train": 46,
+    "validation": 15,
+    "test": 15
+  },
+  "preguntas_por_cantidad_relevantes": {
+    "2": 21,
+    "1": 27,
+    "4": 1,
+    "3": 1
+  },
+  "preguntas_cambiadas": 26,
+  "agregados": 19,
+  "eliminados": 13,
+  "errores_detectados": [],
+  "gold_humano_sha256": "8ac3b7596ca45289dbcab509c9995a6ae82fa6f0203762b896ffb5e75d3e3101",
+  "gold_ia_sha256": "c3cdc04cc06a9ed2936491498aa373e22f61bea87e8095bd2e9cbb02abe4fe3b",
+  "test_question_ids_unchanged": true,
+  "test_frozen_for_parameter_selection": true
+}

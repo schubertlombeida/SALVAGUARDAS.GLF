@@ -1,5 +1,29 @@
 # Evaluación del recuperador RAG de Salvaguardas GLF
 
+## Baseline con gold humano v1 — 3 de octubre de 2026
+
+El usuario confirmó revisión manual de las 50 preguntas GLF-001–050 y entregó 26 decisiones de cambio. `dataset_gold_human_reviewed_v1.csv` conserva 76 relaciones relevantes aprobadas, con `human_reviewed=true`; `dataset_gold.csv` mantiene sin cambios las 66 relaciones IA originales. `cambios_revision_humana.md` enumera 19 altas, 13 bajas y la reformulación de GLF-005. El nombre del revisor y la fecha real de revisión aún no fueron comunicados: en el gold figuran como pendientes; se registra aparte la fecha en que Codex recibió la confirmación.
+
+Los baselines BM25, E5-base e híbrido se ejecutaron con parámetros idénticos a la evaluación inicial. [Impacto de la revisión](impacto_revision_humana.md), [comparación de métricas](comparacion_ia_vs_humano.csv), [resultados por split](resultados_recuperacion_human_v1.csv) y [validación del gold](validacion_gold_humano.json) documentan los resultados. Recall@5 global: BM25 75,0 %, E5-base 68,3 %, híbrido 75,0 %. Hit@5: 88,0 %, 80,0 % y 84,0 %. Ninguno cumple aún Recall@5 global >=80 %.
+
+`dataset_pairs_human_reviewed.csv` incluye 76 positivos aprobados y 252 negativos **candidatos**, pendientes de juicio humano. Ocho negativos previos se promovieron a positivos. Tres positivos cruzan la asignación documental usada para pares; están en el gold para evaluar pero tienen `eligible_for_training=false`. Los negativos también están inhabilitados para entrenamiento. El test se leyó una sola vez para describir este baseline y permanece congelado para seleccionar parámetros.
+
+Desde la raíz, con el ZIP autorizado:
+
+```powershell
+python -m evaluacion_rag.build_human_gold --archive "C:\ruta\GLF_SGAS_Corpus_ES.zip"
+python -m evaluacion_rag.build_human_pairs --archive "C:\ruta\GLF_SGAS_Corpus_ES.zip"
+python -m evaluacion_rag.evaluate_human_baseline --archive "C:\ruta\GLF_SGAS_Corpus_ES.zip"
+python -m evaluacion_rag.verify_human --archive "C:\ruta\GLF_SGAS_Corpus_ES.zip"
+python -m pytest -q
+```
+
+El evaluador escribe resultados nuevos y preserva los anteriores. Los CSV con citas o texto completo del corpus permanecen locales y excluidos del GitHub público. El PR publica código, hashes, agregados y reportes sin esos textos. El experimento académico de Semana 3 se audita [por separado](../docs/auditoria_entrega_semana3.md): TF-IDF + SGD, L2 y parada temprana para diagnosticar sobreajuste; BM25 es una búsqueda léxica, E5-base es preentrenado y no fue ajustado por nosotros.
+
+---
+
+## Historial conservado: evaluación inicial con etiquetas IA
+
 Esta carpeta evalúa **recuperación de fragmentos**, separada del experimento académico de Semana 3. Trabaja con el corpus SGAS en español que ya entregó el equipo: 585 fragmentos de 36 documentos. También se inventarían los otros conjuntos, pero no se mezclan en el índice normativo. Los textos originales quedan en el ZIP local.
 
 **Estado:** 50 preguntas y 316 pares con etiquetas propuestas por IA, **sin revisión humana**. El archivo `dataset_gold.csv` es un borrador revisable, no un gold standard aprobado. Los resultados son provisionales. Lee `reporte_resultados.md` para la tabla medida y las limitaciones.
