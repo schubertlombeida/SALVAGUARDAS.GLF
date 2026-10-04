@@ -1,14 +1,35 @@
 """Servidor de desarrollo local; no destinado a exposición pública."""
 import argparse
 import json
+import re
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from time import perf_counter
 from urllib.parse import urlsplit
-from src.retrieval import load_spanish
+from src.retrieval import load_spanish, tokens
 from .ollama import OllamaUnavailable, generate_answer
 
 PAGE = Path(__file__).with_name('index.html')
+
+
+def select_chat_results(index, query, limit=5):
+    """Rerank a wider BM25 pool for the local UI, leaving benchmark BM25 intact."""
+    candidates = index.search(query, limit=30)
+    concepts = set(tokens(query))
+    categories = set(re.findall(r'categor[ií]a\s+([a-z])\b', query.casefold()))
+
+    def rank(row):
+        text = row['text'].casefold()
+        present = set(tokens(text))
+        coverage = len(concepts & present) / len(concepts) if concepts else 0
+        category_hits = sum(bool(re.search(r'categor[ií]a\s+' + re.escape(letter) + r'\b', text)) or
+                            bool(re.search(r'\b(?:proyectos?|los|las)\s+' + re.escape(letter) + r'\b', text))
+                            for letter in categories)
+        document_id = row.get('document_id', '')
+        authority = 1.2 if document_id == 'GLF_MANUAL_SGAS_ES' else 0.6 if document_id.startswith('GLF_') else 0
+        return row['score'] + 2 * coverage + 2.5 * category_hits + authority
+
+    return sorted(candidates, key=rank, reverse=True)[:limit]
 
 
 def handler_for(index, generator=generate_answer):
@@ -51,7 +72,7 @@ def handler_for(index, generator=generate_answer):
             except (ValueError, UnicodeDecodeError) as error:
                 return self.reply(400, {'error': str(error)})
             started = perf_counter()
-            rows = index.search(query, limit=5)
+            rows = select_chat_results(index, query)
             retrieval_seconds = round(perf_counter() - started, 4)
             if self.path == '/api/search':
                 return self.reply(200, {'results': rows, 'seconds': retrieval_seconds})

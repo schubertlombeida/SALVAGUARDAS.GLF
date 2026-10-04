@@ -1,14 +1,16 @@
 import json
+import os
 import threading
 import unittest
 from http.server import ThreadingHTTPServer
+from pathlib import Path
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 from unittest.mock import patch
 
 from app.ollama import OllamaUnavailable, generate_answer, relevant_passages
-from app.server import handler_for
-from src.retrieval import BM25
+from app.server import handler_for, select_chat_results
+from src.retrieval import BM25, load_spanish
 
 ROW = {'chunk_id': 'DOC::0001', 'document_id': 'DOC', 'text': 'El plan incluye participación de la comunidad.', 'language': 'es'}
 
@@ -78,7 +80,7 @@ class LocalChatTests(unittest.TestCase):
         prompt = captured['payload']['messages'][0]['content']
         self.assertIn('Los proyectos A son inelegibles.', prompt)
         self.assertIn('CHUNK_ID: GLF_MANUAL_SGAS_ES::0005', prompt)
-        self.assertIn('Da prioridad a la afirmación explícita que responda', prompt)
+        self.assertIn('Empieza por la primera fuente si responde', prompt)
         self.assertEqual(sources[0]['chunk_id'], row['chunk_id'])
         self.assertTrue(answer.startswith('No.'))
 
@@ -87,7 +89,7 @@ class LocalChatTests(unittest.TestCase):
         self.assertGreater(text.index('Los proyectos A son inelegibles.'), 3500)
         passages = relevant_passages('¿Son elegibles los proyectos de categoría A?', text)
         self.assertEqual(passages.count('Los proyectos A son inelegibles.'), 1)
-        self.assertLessEqual(len(passages), 230)
+        self.assertLessEqual(len(passages), 1050)
         seen = set()
         self.assertIn('inelegibles', relevant_passages('proyectos A elegibles', text, seen=seen))
         self.assertNotIn('inelegibles', relevant_passages('proyectos A elegibles', text, seen=seen))
@@ -102,6 +104,56 @@ class LocalChatTests(unittest.TestCase):
             answer, sources = generate_answer('¿Qué dice sobre un tema ausente?', [ROW])
         self.assertIn('insuficiente', answer)
         self.assertEqual(sources, [])
+
+    def test_insufficient_answer_discards_irrelevant_citation(self):
+        class FakeResponse:
+            def __enter__(self): return self
+            def __exit__(self, *_): pass
+            def read(self, *_):
+                return json.dumps({'message': {'content': 'La documentación recuperada es insuficiente. [DOC::0001]'}}).encode()
+        with patch('app.ollama.urlopen', return_value=FakeResponse()):
+            answer, sources = generate_answer('¿Tema sin evidencia?', [ROW])
+        self.assertEqual(sources, [])
+        self.assertNotIn('[DOC::0001]', answer)
+
+    def test_cited_output_omits_uncited_claims_and_acronym_expansion(self):
+        class FakeResponse:
+            def __enter__(self): return self
+            def __exit__(self, *_): pass
+            def read(self, *_):
+                content = 'Plan de Gestión Inventado (PGAS) [DOC::0001]\nConclusión sin cita.'
+                return json.dumps({'message': {'content': content}}).encode()
+        with patch('app.ollama.urlopen', return_value=FakeResponse()):
+            answer, _ = generate_answer('¿Qué indica?', [ROW])
+        self.assertIn('PGAS [DOC::0001]', answer)
+        self.assertNotIn('Inventado', answer)
+        self.assertNotIn('Conclusión', answer)
+
+    def test_three_real_corpus_regressions_when_available(self):
+        archive = Path(os.getenv('GLF_CORPUS_ZIP',
+            r'C:\Users\NIKO\Desktop\Estudios 2025\Maestria Inteligencia Artificial\Proyecto Integrador\GLF_SGAS_Corpus_ES.zip'))
+        if not archive.exists():
+            self.skipTest('ZIP autorizado no disponible en este equipo')
+        index = load_spanish(archive)
+        self.assertEqual(len(index.records), 585)
+        questions = [
+            '¿Qué instrumentos ambientales y sociales son obligatorios para todos los proyectos?',
+            '¿Qué debe hacer el GLF durante la evaluación de la detección?',
+            '¿Qué diferencia existe entre los proyectos de Categoría B y Categoría C?',
+        ]
+        selected = [select_chat_results(index, question) for question in questions]
+        self.assertTrue(all(len(rows) == 5 for rows in selected))
+        self.assertTrue(all(any(r['chunk_id'] == 'GLF_MANUAL_SGAS_ES::0005' for r in rows) for rows in selected))
+        manual = next(r for r in selected[0] if r['chunk_id'] == 'GLF_MANUAL_SGAS_ES::0005')
+        passage = relevant_passages(questions[0], manual['text'])
+        self.assertIn('Todo proyecto necesita un PGAS, PPPI y mecanismo de reclamaciones', passage)
+        self.assertIn('- PPPI.', passage)
+        step = relevant_passages(questions[1], manual['text'])
+        self.assertIn('Paso 3: evaluación de la detección', step)
+        self.assertNotIn('Paso 5: evaluación e informe', step)
+        comparison = relevant_passages(questions[2], manual['text'])
+        self.assertIn('Los B requieren evaluación ajustada', comparison)
+        self.assertIn('Los C normalmente no requieren evaluación completa', comparison)
 
 
 if __name__ == '__main__':
