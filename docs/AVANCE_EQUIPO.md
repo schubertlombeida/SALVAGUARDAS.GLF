@@ -1,3 +1,17 @@
+# Actualización de recuperación - 3 de octubre de 2026
+
+`evaluacion_rag/` contiene el primer benchmark ejecutado del retrieval GLF: 50 preguntas propuestas por IA, 316 pares, BM25/E5-base/híbrido sobre 585 fragmentos normativos. Ningún método alcanzó 80 % de Recall@5; el p95 medido cubre solo búsqueda local. BM25 queda como candidato provisional por validación. Antes de afirmar KPI hace falta revisar etiquetas, ampliar relevantes y medir extremo a extremo. Semana 3 permanece separada en su paquete local.
+
+---
+
+# Actualización del 3 de octubre de 2026
+
+Semana 3: entrega exploratoria preparada localmente en outputs/semana_3/ENTREGA_SEMANA_3.zip, relativa a la carpeta del proyecto ChatGPT que contiene este checkout. Usar ese paquete vigente, no el notebook inicial de este checkout. Contiene notebook ejecutado, PDF de 7 páginas, cinco figuras a 300 DPI, código y registros. Etiquetas IA sin revisión humana; sobreajuste observado; L2 y parada temprana evaluados. Exactitud balanceada 50% en validación y prueba. No se entrenó E5 ni se validaron KPI RAG.
+
+Pendiente: revisión y envío a Blackboard. Este paquete no se ha publicado en GitHub. Los textos del corpus deben mantenerse fuera del repositorio público. Ver docs/semana_3.md. El estado siguiente es histórico, anterior al experimento.
+
+---
+
 # Avance del equipo — 28 de septiembre de 2026
 
 Punto de entrada único para colaborar. Prioridad: semana 3; fecha comunicada por Niko: mañana al final del día, pendiente de confirmar en Blackboard.

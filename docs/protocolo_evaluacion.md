@@ -1,3 +1,9 @@
+# Actualización - 3 de octubre de 2026
+
+La carpeta `evaluacion_rag/` contiene una evaluación ejecutada de BM25, E5-base e híbrido con 50 preguntas y etiquetas **propuestas por IA, sin revisión humana**. Es un benchmark provisional, no la evaluación aprobada que exige el protocolo de abajo. La comparación detectó resultados útiles para decidir qué revisar, pero el cumplimiento oficial del KPI Recall@5 sigue sin verificar.
+
+---
+
 # Protocolo inicial de evaluación de recuperación
 
 Estado: infraestructura implementada; no existen resultados de relevancia validados.

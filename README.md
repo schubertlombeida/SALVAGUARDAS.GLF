@@ -2,7 +2,15 @@
 
 **Empezar aquí: [Avance del equipo, pendientes y cómo abrir la web](docs/AVANCE_EQUIPO.md).**
 
-## Estado vigente al 28 de septiembre de 2026
+## Estado de recuperación - 3 de octubre de 2026
+
+[Evaluación RAG](evaluacion_rag/README.md): 585 fragmentos normativos en español, 50 preguntas y 316 pares con etiquetas IA sin revisión humana. Se ejecutaron BM25, E5-base preentrenado e híbrido RRF con las mismas preguntas. Recall@5 provisional: 74,7 %, 68,7 % y 73,7 %; ninguno alcanza el objetivo de 80 %. BM25 es el candidato provisional por validación. Los tiempos informados corresponden a búsqueda local, no al sistema completo. El paquete académico de Semana 3 permanece separado y conservado.
+
+Los CSV con citas y textos se mantienen locales y excluidos de Git público. Para interpretaciones y reproducción, ver el README de evaluación y su reporte generado.
+
+---
+
+## Estado histórico al 28 de septiembre de 2026
 
 La documentación de semana 1 que figura más abajo es histórica. La referencia actual es [Decisiones vigentes](docs/decisiones_vigentes.md): Recall@5 ≥ 80 %, p95 ≤ 7 segundos y presupuesto máximo USD 200. Los datos comprobados contienen 26 expedientes y la partición 18/4/4. Estas cifras son metas y composición del dataset, no rendimiento medido.
 
@@ -23,7 +31,7 @@ python -m src.eda --archive /ruta/GLF_Galapagos_Datasets_Iniciales.zip
 python -m unittest discover -s tests -v
 ```
 
-El notebook también puede ejecutarse con Jupyter configurando `GLF_DATASET_ZIP`. Los resultados agregados se guardan en `results/`. Hay trece pruebas de consistencia, recuperación y API. La web local permite consultar el corpus normativo con BM25; todavía no hay experimento de entrenamiento ni evaluación de relevancia. Los requisitos finales siguen en desarrollo.
+El notebook también puede ejecutarse con Jupyter configurando `GLF_DATASET_ZIP`. Los resultados agregados se guardan en `results/`. Hay trece pruebas de consistencia, recuperación y API. La web local permite consultar el corpus normativo con BM25; el experimento académico de Semana 3 y una evaluación provisional de recuperación se prepararon después de esta sección histórica. Los requisitos finales siguen en desarrollo.
 
 ### Abrir la web local
 

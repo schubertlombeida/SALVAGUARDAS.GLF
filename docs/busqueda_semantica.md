@@ -1,3 +1,9 @@
+# Actualización - 3 de octubre de 2026
+
+Se ejecutó E5-base preentrenado en CPU para los 585 fragmentos del corpus SGAS español dentro de `evaluacion_rag/`; 1.212 ventanas vectorizadas, embeddings reutilizados por caché. Su Recall@5 provisional frente a 50 valoraciones IA fue 68,7 %. La comparación con BM25 e híbrido y sus límites están en `evaluacion_rag/reporte_resultados.md`. El código previo de E5-small y el notebook de Colab siguen siendo prototipos separados.
+
+---
+
 # E5 y búsqueda híbrida
 
 Estado: código integrado en el evaluador; inferencia real pendiente. Este equipo no tiene torch, transformers ni sentence-transformers instalados. La web continúa usando BM25.

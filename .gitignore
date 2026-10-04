@@ -14,3 +14,13 @@ data/processed/*
 
 
 .runtime-web/
+.runtime-e5/
+evaluacion_rag/.cache/
+evaluacion_rag/dataset_gold.csv
+evaluacion_rag/dataset_pairs.csv
+evaluacion_rag/inventario_corpus.csv
+evaluacion_rag/resultados_recuperacion.csv
+evaluacion_rag/metricas_recuperacion.json
+evaluacion_rag/reporte_resultados.md
+evaluacion_rag/resultados_por_pregunta.csv
+evaluacion_rag/auditoria_pares.json
