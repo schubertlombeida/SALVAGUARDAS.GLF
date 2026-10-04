@@ -24,3 +24,7 @@ evaluacion_rag/metricas_recuperacion.json
 evaluacion_rag/reporte_resultados.md
 evaluacion_rag/resultados_por_pregunta.csv
 evaluacion_rag/auditoria_pares.json
+evaluacion_rag/revision_humana_gold.csv
+evaluacion_rag/revision_humana_candidatos.csv
+evaluacion_rag/casos_revision_prioritaria.csv
+evaluacion_rag/diagnostico_particiones.json

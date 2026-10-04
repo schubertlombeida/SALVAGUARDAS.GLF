@@ -41,6 +41,38 @@ def verify(archive,folder):
         assert math.isclose(times[math.ceil(.95*len(times))-1],float(aggregate['p95_seconds']),rel_tol=0,abs_tol=1e-10)
         assert math.isclose(times[math.ceil(.5*len(times))-1],float(aggregate['p50_seconds']),rel_tol=0,abs_tol=1e-10)
     assert (folder/'reporte_resultados.md').stat().st_size>1000
+    review_path=folder/'revision_humana_gold.csv'
+    if review_path.exists():
+        review=read_csv(review_path)
+        candidate_rows=read_csv(folder/'revision_humana_candidatos.csv')
+        priorities=read_csv(folder/'casos_revision_prioritaria.csv')
+        diagnostic=json.loads((folder/'diagnostico_particiones.json').read_text(encoding='utf-8'))
+        assert len(review)==50 and {r['question_id'] for r in review}=={q['question_id'] for q in gold}
+        assert len(priorities)==diagnostic['priority_cases']
+        assert sum(p['tipo']=='hard_negative' for p in priorities)==147
+        candidate_ids=set()
+        for r in review:
+            q=next(q for q in gold if q['question_id']==r['question_id'])
+            assert r['question']==q['question'] and r['split']==q['split']
+            assert json.loads(r['relevant_chunk_ids_propuestos'])==json.loads(q['relevant_chunk_ids'])
+            assert r['cita_literal_justificacion']==q['answer_reference']
+            assert r['texto_completo_chunk_relevante_propuesto']==byid[json.loads(q['relevant_chunk_ids'])[0]]['text']
+            assert all(r[k]=='' for k in ('pregunta_aprobada','chunk_relevante_aprobado',
+                'agregar_chunk_ids','eliminar_chunk_ids','observaciones_revisor','nombre_revisor','fecha_revision'))
+            candidates=json.loads(r['candidatos_consolidados'])
+            ids={c['chunk_id'] for c in candidates}
+            assert len(ids)==len(candidates) and set(json.loads(q['relevant_chunk_ids']))<=ids
+            for c in candidates:assert c['extracto']==' '.join(byid[c['chunk_id']]['text'].split())[:650]
+            candidate_ids.update(ids)
+            for key in ('top_10_BM25','top_10_E5_base','top_10_hibrido'):
+                ranking=json.loads(r[key])
+                assert len(ranking)==10 and [x['posicion'] for x in ranking]==list(range(1,11))
+                assert all(x['chunk_id'] in ids and x['documento']==byid[x['chunk_id']]['document_id']
+                           and isinstance(x['score'],(int,float)) for x in ranking)
+        assert len(candidate_ids)==diagnostic['unique_candidate_chunks']
+        assert len(candidate_rows)==sum(len(json.loads(r['candidatos_consolidados'])) for r in review)
+        assert all(r['texto_completo']==byid[r['chunk_id']]['text'] and r['relevante_aprobado']==''
+                   and r['observaciones_revisor']=='' for r in candidate_rows)
     print('VERIFICADO: 585 fragmentos; 50 preguntas con referencias textuales; 316 pares; 150 consultas medidas; 3 resúmenes consistentes; sin fuga detectada.')
 
 if __name__=='__main__':

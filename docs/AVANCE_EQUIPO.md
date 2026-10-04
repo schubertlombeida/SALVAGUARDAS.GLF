@@ -1,5 +1,7 @@
 # Actualización de recuperación - 3 de octubre de 2026
 
+Paquete de revisión humana preparado: 50 preguntas y Top 10 de los tres métodos, consolidados en `evaluacion_rag/revision_humana_gold.csv` local; 240 chunks candidatos únicos. `casos_revision_prioritaria.csv` local contiene 201 incidencias (54 señales sobre preguntas y 147 hard negatives). Ambos contienen texto de fuente y están fuera del GitHub público. El diagnóstico de la diferencia validation/test y el plan de mejora están publicados en `evaluacion_rag/`. E5-base es el modelo de esta evaluación; E5-small es un prototipo histórico. No se optimizó con test ni se entrenó E5.
+
 `evaluacion_rag/` contiene el primer benchmark ejecutado del retrieval GLF: 50 preguntas propuestas por IA, 316 pares, BM25/E5-base/híbrido sobre 585 fragmentos normativos. Ningún método alcanzó 80 % de Recall@5; el p95 medido cubre solo búsqueda local. BM25 queda como candidato provisional por validación. Antes de afirmar KPI hace falta revisar etiquetas, ampliar relevantes y medir extremo a extremo. Semana 3 permanece separada en su paquete local.
 
 ---

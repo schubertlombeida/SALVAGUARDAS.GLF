@@ -1,4 +1,9 @@
-"""E5 opcional y fusión RRF; no sustituye validación de relevancia."""
+"""Prototipo legado E5-small y fusión RRF.
+
+La evaluación vigente usa E5-base en evaluacion_rag/e5_index.py. La clase E5
+permanece para compatibilidad con el código y pruebas anteriores; no produce
+las métricas oficiales actuales.
+"""
 import numpy as np
 
 
@@ -23,6 +28,7 @@ def passages(text, tokenizer, max_tokens=512):
 
 
 class E5:
+    """Implementación histórica de multilingual-e5-small; no usar para el benchmark actual."""
     name = 'E5-small'
     def __init__(self, records, model=None):
         if not records:

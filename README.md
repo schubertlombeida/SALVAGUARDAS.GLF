@@ -1,5 +1,7 @@
 # Asistente de riesgos y salvaguardas GLF
 
+**Revisión del gold standard en preparación:** [guía y generador del paquete humano](evaluacion_rag/README.md), [diagnóstico de particiones](evaluacion_rag/diagnostico_particiones.md) y [plan de mejora de Recall](evaluacion_rag/plan_mejora_recall.md). Los CSV con texto del corpus están disponibles localmente y no se publican en este repositorio público. Test permanece congelado.
+
 **Empezar aquí: [Avance del equipo, pendientes y cómo abrir la web](docs/AVANCE_EQUIPO.md).**
 
 ## Estado de recuperación - 3 de octubre de 2026

@@ -1,10 +1,12 @@
 # Actualización - 3 de octubre de 2026
 
+**Modelo oficial del benchmark vigente: `intfloat/multilingual-e5-base`.** El prototipo E5-small de `src/semantic.py` es legado y no produjo las métricas actuales. La planificación histórica que aparece debajo se conserva como registro, no como instrucciones de la evaluación vigente.
+
 Se ejecutó E5-base preentrenado en CPU para los 585 fragmentos del corpus SGAS español dentro de `evaluacion_rag/`; 1.212 ventanas vectorizadas, embeddings reutilizados por caché. Su Recall@5 provisional frente a 50 valoraciones IA fue 68,7 %. La comparación con BM25 e híbrido y sus límites están en `evaluacion_rag/reporte_resultados.md`. El código previo de E5-small y el notebook de Colab siguen siendo prototipos separados.
 
 ---
 
-# E5 y búsqueda híbrida
+# E5 y búsqueda híbrida: planificación histórica anterior al benchmark E5-base
 
 Estado: código integrado en el evaluador; inferencia real pendiente. Este equipo no tiene torch, transformers ni sentence-transformers instalados. La web continúa usando BM25.
 
