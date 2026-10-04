@@ -17,7 +17,13 @@ Paquete conservado: `outputs/semana_3/ENTREGA_SEMANA_3.zip` en el proyecto local
 | Reporte técnico PDF | `results/reports/diagnostic_report.pdf`: 7 páginas; resumen, método, resultados, curvas, estrategias, conclusiones y referencias | Presente |
 | Visualizaciones profesionales | Cinco PNG con títulos, ejes, leyendas y grid en el código; metadatos de 300 DPI (299,9994 por redondeo) | Presente |
 
-Se comprobó la lista del ZIP, las salidas guardadas del notebook, el contenido extraíble del PDF y sus páginas 1 y 7 renderizadas visualmente. Las cinco figuras tienen resoluciones entre 2370×1317 y 3120×1278 píxeles y metadatos cercanos a 300 DPI. El notebook no se volvió a ejecutar durante esta auditoría; los resultados entregados ya están guardados y no se alteró el paquete.
+Se comprobó la lista del ZIP, las salidas guardadas del notebook, el contenido extraíble del PDF y sus páginas 1 y 7 renderizadas visualmente. Las cinco figuras tienen resoluciones entre 2370×1317 y 3120×1278 píxeles y metadatos cercanos a 300 DPI.
+
+## ZIP académico limpio y ejecución de comprobación
+
+Se creó `outputs/semana_3/SEMANA_3_ENTREGA_ACADEMICA.zip` mediante `scripts/build_semana3_submission.py`. Incluye **20 archivos** exclusivamente del experimento de Semana 3: notebook, código modular y constructor del reporte, datos de entrada IA, requirements, historiales/comparación/auditoría, cinco figuras y PDF. Excluye HTML auxiliar, cachés, archivos temporales, web y benchmark RAG. SHA-256 del nuevo ZIP: `9827b9063476dd599f66e69d1a24027407301a2694f29ddb047ba8d0a98e5501`.
+
+El script cotejó las nueve celdas ejecutadas, los nueve registros de comparación con `metrics.json`, las longitudes de historiales y los hashes de los 20 archivos antes y después de comprimir. El ZIP pasó CRC, contiene siete páginas PDF y cinco PNG con metadatos de 300 DPI. **Se extrajo una copia temporal y se ejecutó el notebook completo con nbclient: 9/9 celdas de código, cero errores; modelo registrado `early_stopping`.** El ZIP y el paquete fuente conservaron sus hashes durante esta comprobación. El paquete original `ENTREGA_SEMANA_3.zip` no fue modificado.
 
 El hallazgo central se mantiene: el modelo base terminó con loss train 0,0026 frente a loss validation 0,8662 y exactitud balanceada de validación de 50 %. L2 redujo la pérdida de validación a 0,6801 y Early Stopping a 0,6235, pero ambas estrategias conservaron 50 % de exactitud balanceada. La exactitud de test de 88,9 % refleja una partición con ocho positivos de nueve; no prueba buen rendimiento. Estos números corresponden exclusivamente a Semana 3 y no se mezclan con Recall@5 del prototipo RAG.
 

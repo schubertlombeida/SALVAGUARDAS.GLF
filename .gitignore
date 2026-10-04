@@ -31,3 +31,6 @@ evaluacion_rag/diagnostico_particiones.json
 evaluacion_rag/dataset_gold_human_reviewed_v1.csv
 evaluacion_rag/dataset_pairs_human_reviewed.csv
 evaluacion_rag/resultados_por_pregunta_human_v1.csv
+evaluacion_rag/revision_negativos_pendientes.csv
+evaluacion_rag/bloque_revision_01.csv
+evaluacion_rag/revision_negativos_test_independiente.csv

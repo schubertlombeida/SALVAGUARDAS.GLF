@@ -1,0 +1,10 @@
+bloque,estado,archivo,cantidad,splits,primer_question_id,ultimo_question_id,rango_en_master
+01,PREPARADO,bloque_revision_01.csv,25,"train,validation",GLF-040,GLF-040,1-25
+02,PENDIENTE,revision_negativos_pendientes.csv (filtrar por rango),25,"train,validation",GLF-039,GLF-049,26-50
+03,PENDIENTE,revision_negativos_pendientes.csv (filtrar por rango),25,"train,validation",GLF-018,GLF-038,51-75
+04,PENDIENTE,revision_negativos_pendientes.csv (filtrar por rango),25,"train,validation",GLF-008,GLF-020,76-100
+05,PENDIENTE,revision_negativos_pendientes.csv (filtrar por rango),25,"train,validation",GLF-020,GLF-010,101-125
+06,PENDIENTE,revision_negativos_pendientes.csv (filtrar por rango),25,"train,validation",GLF-011,GLF-004,126-150
+07,PENDIENTE,revision_negativos_pendientes.csv (filtrar por rango),25,train,GLF-005,GLF-026,151-175
+08,PENDIENTE,revision_negativos_pendientes.csv (filtrar por rango),17,train,GLF-026,GLF-049,176-192
+TEST,PENDIENTE_ADJUDICACION_INDEPENDIENTE,revision_negativos_test_independiente.csv,60,test,GLF-029,GLF-050,193-252

@@ -1,0 +1,18 @@
+{
+  "candidatos": 252,
+  "train": 133,
+  "validation": 59,
+  "test": 60,
+  "bloque_01": 25,
+  "bloques_dev": 8,
+  "priority_counts": {
+    "ALTA": 25,
+    "MEDIA": 33,
+    "BAJA": 134,
+    "TEST_INDEPENDIENTE": 60
+  },
+  "removed_positive_candidates": 10,
+  "source": "dataset_pairs_human_reviewed.csv y Top 10 histórico; no se recalcularon rankings ni métricas.",
+  "test_priority_independent_of_rankings": true,
+  "human_decisions_filled": 0
+}

@@ -1,5 +1,7 @@
 # Asistente de riesgos y salvaguardas GLF
 
+**Etapa actual:** [Semana 3 auditada y ZIP académico limpio](docs/auditoria_entrega_semana3.md); [negativos pendientes y cruces documentales](evaluacion_rag/diagnostico_cruces_y_test.md). El primer bloque de 25 candidatos se guarda localmente para revisión; test v1 no se usa para escoger parámetros.
+
 **Gold humano v1 registrado:** 50 preguntas y 76 relaciones relevantes según decisiones manuales comunicadas por el usuario. [Impacto de la revisión](evaluacion_rag/impacto_revision_humana.md) y [trazabilidad para el proyecto final](evaluacion_rag/trazabilidad_proyecto_final.md). La entrega de [Semana 3](docs/auditoria_entrega_semana3.md) permanece separada; test no se usó para optimizar. Los CSV con texto del corpus se guardan localmente, fuera del GitHub público.
 
 **Revisión del gold standard en preparación:** [guía y generador del paquete humano](evaluacion_rag/README.md), [diagnóstico de particiones](evaluacion_rag/diagnostico_particiones.md) y [plan de mejora de Recall](evaluacion_rag/plan_mejora_recall.md). Los CSV con texto del corpus están disponibles localmente y no se publican en este repositorio público. Test permanece congelado.

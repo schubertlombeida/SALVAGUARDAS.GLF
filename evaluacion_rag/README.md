@@ -2,6 +2,10 @@
 
 ## Baseline con gold humano v1 — 3 de octubre de 2026
 
+**Siguiente revisión, sin optimizar:** [diagnóstico de negativos, cruces y test](diagnostico_cruces_y_test.md). `revision_negativos_pendientes.csv` reúne 252 candidatos con texto; `bloque_revision_01.csv` contiene los primeros 25 de train/validation; `inventario_bloques_negativos.csv` enumera los demás; `revision_negativos_test_independiente.csv` deja test separado y con rankings ocultos. Todos los CSV con texto son locales. Se generan con `python -m evaluacion_rag.prepare_negative_review` a partir de archivos ya existentes, sin ejecutar de nuevo recuperación ni alterar métricas.
+
+Test v1 ya fue consultado en informes anteriores: permanece congelado para selección, pero no se considera totalmente independiente. El gold proviene de propuestas asistidas por ChatGPT y confirmadas por el usuario, sin certificación independiente de un especialista.
+
 El usuario confirmó revisión manual de las 50 preguntas GLF-001–050 y entregó 26 decisiones de cambio. `dataset_gold_human_reviewed_v1.csv` conserva 76 relaciones relevantes aprobadas, con `human_reviewed=true`; `dataset_gold.csv` mantiene sin cambios las 66 relaciones IA originales. `cambios_revision_humana.md` enumera 19 altas, 13 bajas y la reformulación de GLF-005. El nombre del revisor y la fecha real de revisión aún no fueron comunicados: en el gold figuran como pendientes; se registra aparte la fecha en que Codex recibió la confirmación.
 
 Los baselines BM25, E5-base e híbrido se ejecutaron con parámetros idénticos a la evaluación inicial. [Impacto de la revisión](impacto_revision_humana.md), [comparación de métricas](comparacion_ia_vs_humano.csv), [resultados por split](resultados_recuperacion_human_v1.csv) y [validación del gold](validacion_gold_humano.json) documentan los resultados. Recall@5 global: BM25 75,0 %, E5-base 68,3 %, híbrido 75,0 %. Hit@5: 88,0 %, 80,0 % y 84,0 %. Ninguno cumple aún Recall@5 global >=80 %.
