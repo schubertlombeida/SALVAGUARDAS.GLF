@@ -10,7 +10,7 @@ from unittest.mock import patch
 
 from app.ollama import OllamaUnavailable, generate_answer, relevant_passages
 from app.server import handler_for, select_chat_results
-from src.retrieval import BM25, load_spanish
+from src.retrieval import BM25, load_spanish\nfrom src.retrieval_optimized import OptimizedGLFRetriever, load_optimized
 
 ROW = {'chunk_id': 'DOC::0001', 'document_id': 'DOC', 'text': 'El plan incluye participación de la comunidad.', 'language': 'es'}
 
