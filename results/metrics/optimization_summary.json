@@ -1,0 +1,10 @@
+{
+  "baseline": {"k1":1.5,"b":0.75,"train_recall_at_5":0.6358024691,"validation_recall_at_5":0.8181818182,"development_recall_at_5":0.6885964912},
+  "stage1_best_bm25": {"k1":1.0,"b":0.2,"train_recall_at_5":0.6728395062,"validation_recall_at_5":0.8181818182,"development_recall_at_5":0.7149122807},
+  "frozen_final": {"body_k1":0.8,"body_b":0.2,"heading_k1":1.2,"heading_b":0.3,"heading_weight":0.3,"glf_authority_boost":0.15,"train_recall_at_5":0.8055555556,"validation_recall_at_5":0.9090909091,"development_recall_at_5":0.8355263158},
+  "improvement_pp": {"train":16.9753,"validation":9.0909,"development":14.6930},
+  "grid_posthoc_configs":320,
+  "test_used_for_selection":false,
+  "holdout_used_for_selection":false,
+  "note":"La rejilla factorial amplia se ejecutó post-congelamiento solo para documentar sensibilidad; no cambió la configuración seleccionada."
+}
