@@ -28,7 +28,7 @@ New-Item -ItemType Directory -Path $output -Force | Out-Null
 
 $server = $null
 try {
-    $server = Start-Process python -ArgumentList @("-m", "app.server", "--archive", $CorpusZip, "--port", "$Port") -PassThru -WindowStyle Hidden
+    $serverOut = Join-Path $output "server_stdout.log"\n    $serverErr = Join-Path $output "server_stderr.log"\n    $argLine = "-m app.server --archive `"$CorpusZip`" --port $Port"\n    $server = Start-Process python -ArgumentList $argLine -PassThru -WindowStyle Hidden -RedirectStandardOutput $serverOut -RedirectStandardError $serverErr
 
     $ready = $false
     for ($i=0; $i -lt 30; $i++) {
@@ -38,7 +38,7 @@ try {
             if ($status.chunks -eq 585) { $ready = $true; break }
         } catch {}
     }
-    if (-not $ready) { throw "El servidor GLF no inicio correctamente." }
+    if (-not $ready) {\n        Write-Host ""\n        Write-Host "El servidor no inicio. Diagnostico:" -ForegroundColor Red\n        if (Test-Path $serverErr) { Get-Content $serverErr | Write-Host }\n        if (Test-Path $serverOut) { Get-Content $serverOut | Write-Host }\n        throw "El servidor GLF no inicio correctamente."\n    }
 
     Write-Host ""
     Write-Host "Servidor listo: $($status.method), $($status.chunks) fragmentos"
