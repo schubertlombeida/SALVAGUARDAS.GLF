@@ -27,31 +27,48 @@ $output = Join-Path (Get-Location) "results\final_validation"
 New-Item -ItemType Directory -Path $output -Force | Out-Null
 
 $server = $null
+$serverOut = Join-Path $output "server_stdout.log"
+$serverErr = Join-Path $output "server_stderr.log"
+
 try {
-    $serverOut = Join-Path $output "server_stdout.log"\n    $serverErr = Join-Path $output "server_stderr.log"\n    $argLine = "-m app.server --archive `"$CorpusZip`" --port $Port"\n    $server = Start-Process python -ArgumentList $argLine -PassThru -WindowStyle Hidden -RedirectStandardOutput $serverOut -RedirectStandardError $serverErr
+    Remove-Item $serverOut,$serverErr -ErrorAction SilentlyContinue
+
+    $argLine = "-m app.server --archive `"$CorpusZip`" --port $Port"
+    $server = Start-Process -FilePath "python" -ArgumentList $argLine -PassThru -WindowStyle Hidden -RedirectStandardOutput $serverOut -RedirectStandardError $serverErr
 
     $ready = $false
-    for ($i=0; $i -lt 30; $i++) {
+    for ($i = 0; $i -lt 30; $i++) {
         Start-Sleep -Seconds 1
         try {
             $status = Invoke-RestMethod -Uri "http://127.0.0.1:$Port/api/status" -TimeoutSec 2
-            if ($status.chunks -eq 585) { $ready = $true; break }
+            if ($status.chunks -eq 585) {
+                $ready = $true
+                break
+            }
         } catch {}
     }
-    if (-not $ready) {\n        Write-Host ""\n        Write-Host "El servidor no inicio. Diagnostico:" -ForegroundColor Red\n        if (Test-Path $serverErr) { Get-Content $serverErr | Write-Host }\n        if (Test-Path $serverOut) { Get-Content $serverOut | Write-Host }\n        throw "El servidor GLF no inicio correctamente."\n    }
+
+    if (-not $ready) {
+        Write-Host ""
+        Write-Host "El servidor no inicio. Diagnostico:" -ForegroundColor Red
+        if (Test-Path $serverErr) { Get-Content $serverErr | Write-Host }
+        if (Test-Path $serverOut) { Get-Content $serverOut | Write-Host }
+        throw "El servidor GLF no inicio correctamente."
+    }
 
     Write-Host ""
-    Write-Host "Servidor listo: $($status.method), $($status.chunks) fragmentos"
+    Write-Host "Servidor listo: $($status.method), $($status.chunks) fragmentos" -ForegroundColor Green
     Write-Host "Recall@5 desarrollo registrado: $([math]::Round(100*$status.development_recall_at_5,1))%"
     Write-Host "Recall@5 validation registrado: $([math]::Round(100*$status.validation_recall_at_5,1))%"
     Write-Host ""
 
-    python ".\scripts\benchmark_e2e.py" --gold $GoldCsv --base-url "http://127.0.0.1:$Port" --samples $Samples --warmup 3 --output (Join-Path $output "e2e_latency_v2.json")
+    & python ".\scripts\benchmark_e2e.py" --gold $GoldCsv --base-url "http://127.0.0.1:$Port" --samples $Samples --warmup 3 --output (Join-Path $output "e2e_latency_v2.json")
     if ($LASTEXITCODE -ne 0) { throw "El benchmark de latencia fallo." }
 
     $report = Get-Content (Join-Path $output "e2e_latency_v2.json") -Raw | ConvertFrom-Json
+
     Write-Host ""
-    Write-Host "VALIDACION FINAL LOCAL"
+    Write-Host "VALIDACION FINAL LOCAL" -ForegroundColor Cyan
     Write-Host "Muestras: $($report.samples)"
     Write-Host "p50: $([math]::Round($report.p50_total_seconds,3)) s"
     Write-Host "p95: $([math]::Round($report.p95_total_seconds,3)) s"
