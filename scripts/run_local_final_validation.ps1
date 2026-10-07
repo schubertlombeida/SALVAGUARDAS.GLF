@@ -70,9 +70,12 @@ try {
     Write-Host ""
     Write-Host "VALIDACION FINAL LOCAL" -ForegroundColor Cyan
     Write-Host "Muestras: $($report.samples)"
-    Write-Host "p50: $([math]::Round($report.p50_total_seconds,3)) s"
-    Write-Host "p95: $([math]::Round($report.p95_total_seconds,3)) s"
-    Write-Host "Meta p95 <= 7 s: $($report.target_met)"
+    Write-Host "Exitosas: $($report.successful_samples)"
+    Write-Host "Fallidas: $($report.failed_samples)"
+    Write-Host "Insuficientes seguras: $($report.insufficient_answers)"
+    if ($null -ne $report.p50_total_seconds_successful) { Write-Host "p50: $([math]::Round($report.p50_total_seconds_successful,3)) s" }
+    if ($null -ne $report.p95_total_seconds_successful) { Write-Host "p95: $([math]::Round($report.p95_total_seconds_successful,3)) s" }
+    Write-Host "Meta p95 <= 7 s y corrida valida: $($report.target_met)"
     Write-Host "Reporte: $(Join-Path $output 'e2e_latency_v2.json')"
 }
 finally {
