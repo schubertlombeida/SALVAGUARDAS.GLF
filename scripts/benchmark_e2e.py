@@ -82,6 +82,8 @@ def main():
         body, wall, error = ask(args.base_url, q['question'], args.timeout)
         timings = (body or {}).get('timings') or {}
         generated = bool((body or {}).get('generated'))
+        answer_text = (body or {}).get('answer') or ''
+        insufficient = 'documentación recuperada es insuficiente' in answer_text.casefold()
         row = {
             'sample': i + 1,
             'question_id': q['question_id'],
@@ -93,7 +95,8 @@ def main():
             'api_total_seconds': float(timings.get('total_seconds', wall)),
             'wall_seconds': wall,
             'sources': len((body or {}).get('sources') or []),
-            'answer_chars': len((body or {}).get('answer') or ''),
+            'answer_chars': len(answer_text),
+            'insufficient_answer': insufficient,
         }
         rows.append(row)
         status = 'OK' if row['success'] else 'ERROR'
@@ -101,6 +104,7 @@ def main():
 
     successful = [r for r in rows if r['success']]
     failures = len(rows) - len(successful)
+    insufficient_answers = sum(1 for r in successful if r['insufficient_answer'])
 
     if successful:
         totals = [r['api_total_seconds'] for r in successful]
@@ -115,6 +119,7 @@ def main():
         'samples': len(rows),
         'successful_samples': len(successful),
         'failed_samples': failures,
+        'insufficient_answers': insufficient_answers,
         'success_rate': len(successful) / len(rows),
         'warmup_excluded': args.warmup,
         'request_timeout_seconds': args.timeout,
