@@ -11,6 +11,8 @@ services:
     envVars:
       - key: HF_TOKEN
         sync: false
+      - key: DEMO_ACCESS_CODE
+        sync: false
       - key: HF_MODEL
         value: Qwen/Qwen2.5-7B-Instruct-1M:fastest
       - key: RATE_LIMIT_PER_HOUR
