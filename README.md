@@ -1,190 +1,255 @@
-# Asistente de riesgos y salvaguardas GLF
+# Asistente RAG de Salvaguardas GLF
 
-## Chat RAG local (Windows)
+![Python](https://img.shields.io/badge/Python-3.11+-blue)
+![Tests](https://img.shields.io/badge/tests-26%20passed-brightgreen)
+![Recall@5](https://img.shields.io/badge/Recall%405-83.6%25-brightgreen)
+![p95](https://img.shields.io/badge/p95-4.617%20s-brightgreen)
+![License](https://img.shields.io/badge/license-MIT-green)
 
-Desde **PowerShell**, instala Python 3.11 o superior y Ollama si aún no están instalados. Ollama se instala con `winget install --id Ollama.Ollama -e` o su instalador oficial. Abre Ollama y descarga el modelo una sola vez:
+Sistema académico de IA para consultar salvaguardas ambientales y sociales del **Galápagos Life Fund (GLF)** mediante recuperación documental y generación local con citas verificables.
+
+El asistente **no aprueba ni rechaza proyectos**. Recupera evidencia y ayuda a localizar requisitos; la decisión final permanece en el especialista humano.
+
+## Contenido
+
+- [Problema](#problema)
+- [Solución](#solución)
+- [Resultados](#resultados)
+- [Arquitectura](#arquitectura)
+- [Instalación](#instalación)
+- [Uso](#uso)
+- [Pruebas](#pruebas)
+- [Estructura](#estructura)
+- [Documentación](#documentación)
+- [Privacidad y ética](#privacidad-y-ética)
+- [Limitaciones](#limitaciones)
+- [Presentación final](#presentación-final)
+- [Equipo](#equipo)
+- [Licencia](#licencia)
+
+## Problema
+
+La documentación de salvaguardas del GLF, sus anexos y referencias normativas contiene requisitos distribuidos entre múltiples fuentes. Localizar rápidamente el fundamento correcto puede requerir revisar documentos extensos.
+
+El proyecto busca reducir ese tiempo de búsqueda manteniendo trazabilidad documental.
+
+## Solución
+
+El sistema implementa un flujo RAG:
+
+1. el usuario escribe una consulta;
+2. `BM25-heading-authority-v2` recupera hasta cinco fragmentos;
+3. Qwen 2.5 7B genera una respuesta local usando únicamente el contexto recuperado;
+4. cada afirmación debe incluir un `chunk_id` verificable;
+5. el sistema valida las citas;
+6. si no existe evidencia suficiente, se abstiene.
+
+Corpus actual: **585 fragmentos normativos en español**.
+
+## Resultados
+
+### Recuperación
+
+| Métrica | Resultado | Meta |
+|---|---:|---:|
+| Recall@5 train | 80.6% | ≥80% |
+| Recall@5 validation | 90.9% | ≥80% |
+| Recall@5 train + validation | **83.6%** | ≥80% |
+| Hit@5 desarrollo | 94.7% | — |
+| MRR@5 desarrollo | 0.752 | — |
+| Holdout post-congelamiento | 85.0% | evidencia adicional |
+
+El holdout post-congelamiento fue pre-revisado por IA y confirmado por el usuario; se reporta como auditoría adicional y no como validación humana independiente.
+
+### Latencia extremo a extremo
+
+Benchmark local de 40 consultas, con tres consultas de calentamiento excluidas:
+
+| Métrica | Resultado |
+|---|---:|
+| Exitosas | 40/40 |
+| Fallos HTTP | 0 |
+| p50 | 1.815 s |
+| p95 | **4.617 s** |
+| Meta p95 | ≤7 s |
+| Estado | **Cumple** |
+
+La primera consulta después de cargar Ollama puede ser más lenta por arranque en frío.
+
+## Arquitectura
+
+```text
+Usuario
+   │
+   ▼
+Interfaz web
+   │ POST /api/ask
+   ▼
+BM25-heading-authority-v2
+   │
+   ├── cuerpo BM25
+   ├── encabezados BM25
+   └── prioridad moderada de fuentes GLF
+   │
+   ▼
+Top 5 fragmentos
+   │
+   ▼
+Qwen 2.5 7B · Ollama local
+   │
+   ▼
+Validador de citas / calidad
+   │
+   ├── respuesta sustentada
+   └── abstención segura
+```
+
+Detalles completos: [docs/arquitectura.md](docs/arquitectura.md).
+
+## Instalación
+
+### Requisitos
+
+- Python 3.11 o superior.
+- Ollama.
+- ZIP autorizado del corpus `GLF_SGAS_Corpus_ES.zip`.
+
+Instalar dependencias:
+
+```powershell
+python -m pip install -r requirements.txt
+```
+
+Instalar el modelo local:
 
 ```powershell
 ollama pull qwen2.5:7b
 ```
 
-Desde la raíz del repositorio, con el ZIP local autorizado (ajusta `$archivo` si lo guardaste en otro lugar):
+## Uso
+
+Desde PowerShell:
 
 ```powershell
-python -m pip install -r requirements.txt
-$archivo = 'C:\Users\NIKO\Desktop\Estudios 2025\Maestria Inteligencia Artificial\Proyecto Integrador\GLF_SGAS_Corpus_ES.zip'
-$env:GLF_OLLAMA_URL = 'http://127.0.0.1:11434'
-$env:GLF_OLLAMA_MODEL = 'qwen2.5:7b'
-python -m app.server --archive $archivo
+$corpus = "C:\ruta\GLF_SGAS_Corpus_ES.zip"
+$env:GLF_OLLAMA_URL = "http://127.0.0.1:11434"
+$env:GLF_OLLAMA_MODEL = "qwen2.5:7b"
+
+python -m app.server --archive "$corpus" --port 8765
 ```
 
-Abre [http://127.0.0.1:8765](http://127.0.0.1:8765) en el navegador. El servidor escucha únicamente en `127.0.0.1`. Usa `POST /api/ask` para BM25 (hasta cinco fragmentos) y una respuesta en español con citas a través del Ollama **local**; «Solo buscar evidencia» conserva `POST /api/search`. Si Ollama está cerrado o no tiene el modelo, la página explica el error y muestra los fragmentos BM25 sin llamarlos respuesta generada. Las preguntas no se registran; solo se envían al proceso Ollama local la pregunta y el contexto recuperado. La generación tiene un límite de espera de 45 segundos y las preguntas admiten hasta 1000 caracteres. Se muestran tiempos separados de recuperación, generación y total; la meta p95 ≤ 7 segundos todavía no está verificada. Para detener el servidor, pulsa Ctrl+C.
+Abrir:
 
-El chat de esta sección requiere `python -m app.server`; la configuración WSGI de demostración mantiene únicamente la búsqueda. No se entrenan BM25/E5 ni se modifica el benchmark.
+`http://127.0.0.1:8765`
 
-**4 de octubre de 2026:** [gold operativo v2](evaluacion_rag/cambios_gold_v1_a_v2.md) integrado localmente: 50 preguntas, 82 relaciones relevantes y 186 negativas adjudicadas en train/validation. Test (60 candidatos) sigue pendiente y congelado. Las métricas publicadas son históricas del gold v1; no se optimizó el RAG. La [entrega académica de Semana 3](docs/auditoria_entrega_semana3.md) ya está verificada y disponible como ZIP local.
+Dentro del portal:
 
-**Etapa actual:** [Semana 3 auditada y ZIP académico limpio](docs/auditoria_entrega_semana3.md); [negativos pendientes y cruces documentales](evaluacion_rag/diagnostico_cruces_y_test.md). El primer bloque de 25 candidatos se guarda localmente para revisión; test v1 no se usa para escoger parámetros.
+**Módulo 2 → Asistente RAG → Consultar Corpus**
 
-**Gold humano v1 registrado:** 50 preguntas y 76 relaciones relevantes según decisiones manuales comunicadas por el usuario. [Impacto de la revisión](evaluacion_rag/impacto_revision_humana.md) y [trazabilidad para el proyecto final](evaluacion_rag/trazabilidad_proyecto_final.md). La entrega de [Semana 3](docs/auditoria_entrega_semana3.md) permanece separada; test no se usó para optimizar. Los CSV con texto del corpus se guardan localmente, fuera del GitHub público.
+Ejemplos:
 
-**Revisión del gold standard en preparación:** [guía y generador del paquete humano](evaluacion_rag/README.md), [diagnóstico de particiones](evaluacion_rag/diagnostico_particiones.md) y [plan de mejora de Recall](evaluacion_rag/plan_mejora_recall.md). Los CSV con texto del corpus están disponibles localmente y no se publican en este repositorio público. Test permanece congelado.
+- `¿Qué instrumentos ambientales y sociales son obligatorios para todos los proyectos?`
+- `¿Qué debe hacer el GLF durante la evaluación de la detección?`
+- `¿Qué diferencia existe entre los proyectos de Categoría B y Categoría C?`
 
-**Empezar aquí: [Avance del equipo, pendientes y cómo abrir la web](docs/AVANCE_EQUIPO.md).**
+Una pregunta fuera del dominio debe producir abstención segura.
 
-## Estado de recuperación - 3 de octubre de 2026
+## Pruebas
 
-[Evaluación RAG](evaluacion_rag/README.md): 585 fragmentos normativos en español, 50 preguntas y 316 pares con etiquetas IA sin revisión humana. Se ejecutaron BM25, E5-base preentrenado e híbrido RRF con las mismas preguntas. Recall@5 provisional: 74,7 %, 68,7 % y 73,7 %; ninguno alcanza el objetivo de 80 %. BM25 es el candidato provisional por validación. Los tiempos informados corresponden a búsqueda local, no al sistema completo. El paquete académico de Semana 3 permanece separado y conservado.
+Ejecutar:
 
-Los CSV con citas y textos se mantienen locales y excluidos de Git público. Para interpretaciones y reproducción, ver el README de evaluación y su reporte generado.
-
----
-
-## Estado histórico al 28 de septiembre de 2026
-
-La documentación de semana 1 que figura más abajo es histórica. La referencia actual es [Decisiones vigentes](docs/decisiones_vigentes.md): Recall@5 ≥ 80 %, p95 ≤ 7 segundos y presupuesto máximo USD 200. Los datos comprobados contienen 26 expedientes y la partición 18/4/4. Estas cifras son metas y composición del dataset, no rendimiento medido.
-
-- [Control de versiones](docs/control_versiones.md)
-- [EDA con seis figuras](docs/analisis_datos.md) y [notebook ejecutado](notebooks/01_exploracion.ipynb)
-- [Plan de trabajo](docs/planificacion.md)
-- [Preparación de semana 3](docs/semana_3.md)
-- [Protocolo de evaluación y etiquetado](docs/protocolo_evaluacion.md)
-- [Diseño inicial de interfaz](docs/diseno_interfaz.md)
-
-### Reproducir el EDA
-
-Python 3.11. Instalar dependencias y ejecutar desde la raíz, indicando la ruta de un ZIP autorizado. Los datos privados no están incluidos.
-
-```sh
-python -m pip install -r requirements.txt
-python -m src.eda --archive /ruta/GLF_Galapagos_Datasets_Iniciales.zip
-python -m unittest discover -s tests -v
+```powershell
+python -m pytest -q
 ```
 
-El notebook también puede ejecutarse con Jupyter configurando `GLF_DATASET_ZIP`. Los resultados agregados se guardan en `results/`. Hay trece pruebas de consistencia, recuperación y API. La web local permite consultar el corpus normativo con BM25; el experimento académico de Semana 3 y una evaluación provisional de recuperación se prepararon después de esta sección histórica. Los requisitos finales siguen en desarrollo.
+Resultado verificado de la versión actual:
 
-### Abrir la web local
-
-Desde la raíz del repositorio, con Python 3.11 o superior:
-
-```sh
-python -m app.server --archive /ruta/GLF_SGAS_Corpus_ES.zip
+```text
+26 passed, 2 skipped, 0 failed
 ```
 
-Abrir http://127.0.0.1:8765. El servidor lee 585 fragmentos del ZIP local sin subirlos a servicios externos. Detener con Ctrl+C. No exponer este servidor de desarrollo a Internet. Véase [guía de la web](docs/web_local.md).
-
-## Documentación histórica de semana 1
-
-
-Documentación académica del proyecto, organizada por semana. La primera entrega corresponde al Workshop de Metodología SMART.
-
-**Equipo:** Schubert Lombeida Manjarrez y Niko Dimitri Jiménez Bruno.  
-**Estado:** propuesta y planificación; todavía no contiene una aplicación ni resultados experimentales.
-
-## Objetivo
-
-Diseñar y evaluar un prototipo que recupere fichas pertinentes de riesgos y salvaguardas, muestre sus fuentes y apoye la revisión de la nueva matriz GLF de 17 campos. El especialista conserva las valoraciones y decisiones.
-
-Se propone comparar una búsqueda BM25 con un modelo de embeddings multilingüe E5 y complementar ambos con reglas de revisión de campos y cálculos.
+Los dos tests omitidos requieren artefactos privados/locales de evaluación que no se publican en GitHub.
 
 ## Estructura
 
-~~~text
+```text
 .
-|-- README.md
-|-- .gitignore
-|-- .gitattributes
-|-- manifest.json
-|-- Semana 1- Workshop de Metodología SMART/
-    |-- 01_Matriz_evaluacion_SMART.xlsx
-    |-- 02_Analisis_y_solucion_recomendada.docx
-    |-- 03_Canvas_SMART_GLF.docx
-    |-- 04_Checklist_SMART_GLF.docx
-    |-- 05_Guion_pitch_GLF.docx
-    |-- 06_Formulario_especialista_Sostenibilidad.docx
-~~~
+├── README.md
+├── LICENSE
+├── requirements.txt
+├── app/
+├── data/
+├── docs/
+│   ├── planificacion.md
+│   ├── analisis_datos.md
+│   ├── arquitectura.md
+│   ├── optimizacion.md
+│   ├── consideraciones_eticas.md
+│   └── manual_usuario.md
+├── notebooks/
+│   ├── 01_exploracion.ipynb
+│   ├── 02_recuperacion_E5_Colab.ipynb
+│   ├── 03_modelado.ipynb
+│   ├── 04_optimizacion.ipynb
+│   └── 05_evaluacion.ipynb
+├── src/
+├── tests/
+├── results/
+└── evaluacion_rag/
+```
 
-Cada nueva semana tendrá una carpeta al mismo nivel, con el formato **Semana N- Nombre de la actividad**, y contendrá directamente todos sus entregables. Las carpetas siguientes se incorporarán cuando se conozcan sus actividades.
+## Documentación
 
-## Semana 1: documentos y orden de lectura
+Documentos principales de la entrega:
 
-| Documento | Contenido |
-|---|---|
-| [Análisis y solución recomendada](Semana%201-%20Workshop%20de%20Metodolog%C3%ADa%20SMART/02_Analisis_y_solucion_recomendada.docx) | Comparación de opciones, fuentes, alcance, métricas, presupuesto y cronograma. |
-| [Matriz de evaluación SMART](Semana%201-%20Workshop%20de%20Metodolog%C3%ADa%20SMART/01_Matriz_evaluacion_SMART.xlsx) | Tres alternativas, puntuaciones ponderadas y 15 justificaciones. |
-| [Canvas SMART](Semana%201-%20Workshop%20de%20Metodolog%C3%ADa%20SMART/03_Canvas_SMART_GLF.docx) | Objetivo, recursos, riesgos y planificación. |
-| [Checklist SMART](Semana%201-%20Workshop%20de%20Metodolog%C3%ADa%20SMART/04_Checklist_SMART_GLF.docx) | Validación documental y condiciones pendientes. |
-| [Guion del pitch](Semana%201-%20Workshop%20de%20Metodolog%C3%ADa%20SMART/05_Guion_pitch_GLF.docx) | Texto para ensayar una presentación de aproximadamente tres minutos. |
-| [Formulario para el especialista](Semana%201-%20Workshop%20de%20Metodolog%C3%ADa%20SMART/06_Formulario_especialista_Sostenibilidad.docx) | Entrevista con Ulf, referencia experta, medición y acuerdos. |
+- [Planificación](docs/planificacion.md)
+- [Análisis de datos](docs/analisis_datos.md)
+- [Arquitectura](docs/arquitectura.md)
+- [Optimización](docs/optimizacion.md)
+- [Consideraciones éticas](docs/consideraciones_eticas.md)
+- [Manual de usuario](docs/manual_usuario.md)
+- [Evaluación RAG](docs/evaluacion_rag_v2.md)
+- [Congelamiento del RAG](docs/rag_v2_frozen.md)
 
-Descargar los archivos para editarlos en Word y Excel o herramientas compatibles. GitHub conserva los archivos, pero la revisión de diferencias de estos formatos binarios es limitada.
+La optimización de Semana 5 incluye 320 configuraciones de sensibilidad, partial dependence adaptado a Recall@5, importancia de hiperparámetros e interacciones.
 
-## Resultado de la selección
+## Privacidad y ética
 
-| Alternativa | Puntuación sobre 5 |
-|---|---:|
-| GLF | 4,40 |
-| PreClass AI | 4,00 |
-| PoliScope AI | 3,40 |
+- El corpus completo y los artefactos sensibles permanecen fuera del repositorio público.
+- El servidor de desarrollo escucha únicamente en `127.0.0.1`.
+- Las consultas no se almacenan en logs de texto.
+- La generación se ejecuta localmente.
+- El sistema muestra citas y evidencia.
+- No se permite presentar el resultado como una decisión institucional automática.
 
-Las puntuaciones son una valoración técnica argumentada. No representan el rendimiento medido de modelos.
+Ver [consideraciones éticas](docs/consideraciones_eticas.md).
 
-El checklist obtiene **24/31, amarillo**. Quedan pendientes la línea base de tiempos, la verificación del corpus, la dedicación semanal del equipo y la capacidad de cómputo.
+## Limitaciones
 
-## Restricciones y calendario
+- El corpus puede quedar desactualizado.
+- Recall@5 no garantiza exhaustividad de cada respuesta.
+- Qwen puede producir errores; por eso se validan citas y se mantiene revisión humana.
+- El arranque en frío de Ollama puede superar la latencia normal.
+- El servidor actual es una versión local de demostración, no un servicio institucional de producción.
+- La publicación remota del corpus depende de permisos de redistribución.
 
-- Seis semanas totales, con cinco semanas restantes en la planificación preparada.
-- Hasta 30 expedientes declarados, pendientes de inventario y anonimización.
-- Presupuesto directo estimado por el equipo: USD 100.
-- Ulf disponible como especialista; agenda y criterios específicos por acordar.
-- Calendario propuesto: 19 de septiembre a 23 de octubre de 2026.
-- Entrega del workshop prevista para el domingo 20 de septiembre a las 21:00; zona horaria de la plataforma pendiente de comprobar.
+## Presentación final
 
-Las metas de recuperación, alertas, trazabilidad y ahorro de tiempo son propuestas para el piloto. No se presentan como resultados logrados.
+Pendientes de la entrega académica:
 
-## Manejo de documentos
+- video pitch de máximo 5 minutos;
+- video de respuestas a las preguntas asignadas por la profesora;
+- enlace público de demostración, si se autoriza y se decide desplegar remotamente.
 
-Este paquete contiene únicamente los seis entregables preparados y los archivos de organización del repositorio. Los expedientes, documentos fuente institucionales, datos personales, archivos de trabajo y resultados temporales permanecen fuera del paquete.
+Los enlaces se añadirán aquí cuando estén disponibles.
 
-Antes de habilitar acceso público, revisar que la difusión de los nombres y del contenido institucional incluido en los entregables esté autorizada. Un repositorio privado permite coordinar la revisión inicial.
+## Equipo
 
-El archivo .gitignore previene incorporaciones accidentales en las rutas habituales; no anonimiza documentos ni elimina información del historial de Git.
+- **Niko Dimitri Jiménez Bruno**
+- **Schubert Lombeida Manjarrez**
 
-## Actualización
+Proyecto Integrador de Inteligencia Artificial · 2026.
 
-1. Editar el documento correspondiente sin cambiar su ruta.
-2. Mantener coherencia entre matriz, análisis, Canvas, checklist y guion.
-3. Registrar en el mensaje del commit el cambio y su motivo.
-4. Actualizar los hashes de manifest.json si se modifica algún entregable.
+## Licencia
 
-manifest.json permite comprobar la integridad de esta copia inicial y relacionar sus nombres con los originales.
-
-## Subir a GitHub
-
-Crear un repositorio vacío y subir **el contenido de esta carpeta**, conservando su estructura. Si se usa Git, ejecutar desde esta carpeta:
-
-~~~bash
-git init
-git add .
-git commit -m "Añadir entregables del workshop SMART"
-git branch -M main
-git remote add origin https://github.com/USUARIO/NOMBRE-REPOSITORIO.git
-git push -u origin main
-~~~
-
-Sustituir USUARIO y NOMBRE-REPOSITORIO por los datos reales. No se ha creado ni publicado un repositorio remoto como parte de esta preparación.
-
-## Alcance de uso
-
-Documentación académica de trabajo. No constituye aprobación institucional, certificación de cumplimiento ni autorización para reutilizar documentos de terceros. No se incorpora una licencia de redistribución porque sus condiciones todavía no han sido definidas.
-
-
-## Preparación de publicación
-
-Servidor WSGI y contenedor preparados. Consulta [despliegue](docs/despliegue.md). Waitress probado localmente con 585 fragmentos; Docker y publicación remota pendientes.
-
-[Búsqueda semántica E5: implementación y pendientes](docs/busqueda_semantica.md). La web continúa usando BM25.
-
-## Notebook de Colab
-
-[02_recuperacion_E5_Colab.ipynb](notebooks/02_recuperacion_E5_Colab.ipynb) es autónomo: instala dependencias, carga ZIP, descarga E5, construye el índice, compara búsquedas y exporta el registro. Preparado y validado estructuralmente; ejecución real pendiente. No sustituye overfitting_analysis.ipynb de semana 3.
+El código original del proyecto se publica bajo licencia MIT. La licencia **no** concede derechos sobre documentos, logos, normativa, datasets o materiales de terceros referenciados por el proyecto. Ver [LICENSE](LICENSE).
