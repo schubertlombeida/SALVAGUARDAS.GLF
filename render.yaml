@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: glf-rag-demo-segura
+    runtime: python
+    plan: free
+    branch: deploy/secure-public-demo
+    buildCommand: pip install -r public_demo/requirements.txt
+    startCommand: gunicorn public_demo.app:app --workers 1 --threads 4 --timeout 90
+    healthCheckPath: /healthz
+    autoDeploy: false
+    envVars:
+      - key: HF_TOKEN
+        sync: false
+      - key: HF_MODEL
+        value: Qwen/Qwen2.5-7B-Instruct-1M:fastest
+      - key: RATE_LIMIT_PER_HOUR
+        value: "30"
