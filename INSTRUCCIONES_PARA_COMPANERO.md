@@ -20,6 +20,81 @@ Lo pendiente pertenece al cierre final: despliegue público seguro, capturas/man
 
 ---
 
+## Ruta rápida — lo mínimo que debe hacer el compañero
+
+### 1. Instalar Ollama en Windows
+
+Descarga oficial directa:
+
+https://ollama.com/download/windows
+
+O, más fácil, abrir PowerShell y ejecutar:
+
+```powershell
+irm https://ollama.com/install.ps1 | iex
+```
+
+Ollama requiere Windows 10 o posterior.
+
+### 2. Descargar el modelo exacto usado por el proyecto
+
+Página oficial del modelo:
+
+https://ollama.com/library/qwen2.5:7b
+
+Comando:
+
+```powershell
+ollama pull qwen2.5:7b
+```
+
+El modelo ocupa aproximadamente 4.7 GB.
+
+### 3. Clonar el proyecto
+
+```powershell
+git clone https://github.com/schubertlombeida/SALVAGUARDAS.GLF.git
+cd SALVAGUARDAS.GLF
+python -m pip install -r requirements.txt
+```
+
+### 4. Recibir el corpus privado
+
+El equipo debe enviarle aparte:
+
+`GLF_SGAS_Corpus_ES.zip`
+
+No está publicado en GitHub.
+
+### 5. Ejecutar
+
+```powershell
+$corpus = "C:\GLF\GLF_SGAS_Corpus_ES.zip"
+$env:GLF_OLLAMA_URL = "http://127.0.0.1:11434"
+$env:GLF_OLLAMA_MODEL = "qwen2.5:7b"
+python -m app.server --archive "$corpus" --port 8765
+```
+
+Abrir:
+
+`http://127.0.0.1:8765`
+
+### Tiempo orientativo
+
+Con una conexión normal y Python ya instalado:
+
+- Ollama: 2–5 minutos.
+- Clonar GitHub + dependencias: 3–8 minutos.
+- Qwen 2.5 7B: depende de Internet; son ~4.7 GB.
+  - 100 Mbps: ~7–10 minutos reales.
+  - 50 Mbps: ~15 minutos.
+  - 20 Mbps: ~30–40 minutos.
+- Configurar y abrir el RAG: 2–5 minutos.
+
+En una PC normal y con Internet razonable, calcular **20–40 minutos** para tenerlo funcionando. Con Internet lento, **45–60 minutos**.
+
+---
+
 # 1. Probar la versión completa en otra PC
 
 ## Requisitos
