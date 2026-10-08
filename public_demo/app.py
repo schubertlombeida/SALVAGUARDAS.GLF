@@ -5,6 +5,7 @@ import re
 import threading
 import time
 from collections import defaultdict, deque
+from datetime import datetime, timezone
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
@@ -19,7 +20,8 @@ app.config["MAX_CONTENT_LENGTH"] = 32 * 1024
 
 MAX_QUERY_CHARS = 600
 HF_TIMEOUT_SECONDS = 35
-RATE_LIMIT_PER_HOUR = int(os.getenv("RATE_LIMIT_PER_HOUR", "30"))
+RATE_LIMIT_PER_HOUR = int(os.getenv("RATE_LIMIT_PER_HOUR", "15"))
+GLOBAL_DAILY_LIMIT = int(os.getenv("GLOBAL_DAILY_LIMIT", "60"))
 HF_MODEL = os.getenv("HF_MODEL", "Qwen/Qwen2.5-7B-Instruct-1M:fastest")
 
 PUBLIC_DOCS = [
@@ -66,6 +68,9 @@ _init_error = None
 _init_lock = threading.Lock()
 _rate = defaultdict(deque)
 _rate_lock = threading.Lock()
+_daily_lock = threading.Lock()
+_daily_day = None
+_daily_count = 0
 
 CHUNK_RE = re.compile(r"\[([A-Z0-9_]+::P\d{2}C\d{2})\]")
 
@@ -192,6 +197,20 @@ def _authorized():
         return False
     supplied = request.headers.get("X-Demo-Key", "").strip()
     return supplied == expected
+
+
+def _take_global_daily_slot():
+    """Reserva una consulta generativa dentro del tope global UTC."""
+    global _daily_day, _daily_count
+    today = datetime.now(timezone.utc).date().isoformat()
+    with _daily_lock:
+        if _daily_day != today:
+            _daily_day = today
+            _daily_count = 0
+        if _daily_count >= GLOBAL_DAILY_LIMIT:
+            return False, 0
+        _daily_count += 1
+        return True, max(0, GLOBAL_DAILY_LIMIT - _daily_count)
 
 
 def _safe_query():
@@ -385,6 +404,12 @@ def api_ask():
         message, status = error
         return jsonify({"error": message}), status
 
+    slot_ok, quota_remaining = _take_global_daily_slot()
+    if not slot_ok:
+        return jsonify({
+            "error": "La demo alcanzó su límite global de consultas de hoy. Inténtalo mañana."
+        }), 429
+
     started = time.perf_counter()
     try:
         _ensure_index()
@@ -428,6 +453,7 @@ def api_ask():
                 "total_seconds": time.perf_counter() - started,
             },
             "public_demo": True,
+            "quota_remaining_today": quota_remaining,
         }
     )
 
@@ -437,78 +463,166 @@ INDEX_HTML = r"""<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Demo pública · Asistente RAG GLF</title>
+<title>Asistente RAG GLF · Demo pública segura</title>
 <style>
-:root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#172033;background:#f5f7fb}
-*{box-sizing:border-box}body{margin:0}.wrap{max-width:980px;margin:0 auto;padding:28px 18px 60px}
-.banner{background:#102038;color:white;border-radius:20px;padding:26px 28px;margin-bottom:18px;box-shadow:0 14px 35px #1d2a3d22}
-.kicker{font-size:12px;letter-spacing:.08em;font-weight:800;color:#72e6d0}.banner h1{margin:6px 0 8px;font-size:30px}.banner p{margin:0;color:#d7e1ef;line-height:1.55}
-.notice{background:#e9fff6;border:1px solid #99ebc7;border-radius:14px;padding:14px 16px;margin-bottom:18px;color:#175b45}
-.card{background:white;border:1px solid #dfe6ef;border-radius:18px;padding:22px;box-shadow:0 10px 28px #1d2a3d12}
-.row{display:flex;gap:10px}.row input{flex:1;padding:13px 14px;border:1px solid #bfcadd;border-radius:12px;font-size:15px}.row button{border:0;border-radius:12px;background:#4f46e5;color:white;font-weight:800;padding:0 20px;cursor:pointer}.row button:disabled{opacity:.55;cursor:wait}
-.examples{display:flex;gap:8px;flex-wrap:wrap;margin:13px 0 0}.chip{border:1px solid #d9e0ec;background:#f8fafc;color:#334155;border-radius:999px;padding:7px 10px;font-size:12px;cursor:pointer}
-.result{margin-top:18px;border-top:1px solid #e6ebf2;padding-top:18px}.status{display:flex;justify-content:space-between;gap:12px;align-items:center}.badge{font-size:12px;font-weight:800;border-radius:999px;padding:5px 9px;background:#dcfce7;color:#166534}.badge.warn{background:#fff7d6;color:#8a5700}
-.answer{background:#eef2ff;border:1px solid #c7d2fe;border-radius:14px;padding:16px;margin-top:12px;white-space:pre-wrap;line-height:1.58}
-.sources{display:grid;gap:10px;margin-top:14px}.source{border:1px solid #dfe6ef;border-radius:12px;padding:13px;background:#fbfcfe}.source a{color:#3730a3;font-weight:800;text-decoration:none}.source p{font-size:13px;color:#475569;line-height:1.55;margin:7px 0 0}.footer{margin-top:15px;font-size:12px;color:#64748b}.error{background:#fff1f2;border:1px solid #fecdd3;color:#9f1239;border-radius:12px;padding:12px;margin-top:14px}
-@media(max-width:680px){.row{flex-direction:column}.row button{height:44px}.banner h1{font-size:25px}}
+:root{
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  color:#0f172a;background:#f1f5f9
+}
+*{box-sizing:border-box}
+body{margin:0;background:#f1f5f9}
+.topbar{background:#0f172a;color:white;border-bottom:4px solid #0f766e}
+.topbar-inner{max-width:1180px;margin:auto;padding:16px 22px;display:flex;justify-content:space-between;align-items:center;gap:16px}
+.brand{display:flex;align-items:center;gap:12px}
+.mark{width:42px;height:42px;border-radius:12px;background:#0f766e;display:grid;place-items:center;font-weight:900}
+.brand-title{font-size:17px;font-weight:850}.brand-sub{font-size:11px;color:#94a3b8;margin-top:2px}
+.secure{font-size:11px;background:#dcfce7;color:#166534;border-radius:999px;padding:7px 10px;font-weight:800}
+.layout{max-width:1180px;margin:24px auto;padding:0 18px 50px;display:grid;grid-template-columns:220px 1fr;gap:20px}
+.sidebar{background:white;border:1px solid #e2e8f0;border-radius:16px;padding:16px;height:max-content;box-shadow:0 8px 22px #0f172a0b}
+.nav-title{font-size:10px;color:#64748b;font-weight:900;letter-spacing:.08em;margin-bottom:10px}
+.nav-item{padding:10px 11px;border-radius:10px;font-size:12px;color:#475569;margin-bottom:6px}
+.nav-item.active{background:#eef2ff;color:#3730a3;font-weight:800}
+.main{min-width:0}
+.card{background:white;border:1px solid #e2e8f0;border-radius:18px;padding:24px;box-shadow:0 10px 28px #0f172a0c}
+.head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;border-bottom:1px solid #e2e8f0;padding-bottom:16px}
+.label{display:inline-flex;background:#e0e7ff;color:#3730a3;border-radius:7px;padding:6px 9px;font-size:10px;font-weight:900;letter-spacing:.05em;text-transform:uppercase}
+h1{font-size:23px;margin:10px 0 5px}p{margin:0;line-height:1.55}.muted{color:#64748b;font-size:13px}
+.access{min-width:230px}.access input{width:100%;padding:10px 11px;border:1px solid #cbd5e1;border-radius:10px;font-size:12px}
+.access button{width:100%;margin-top:7px;padding:9px;border:0;border-radius:9px;background:#0f766e;color:white;font-weight:800;cursor:pointer}
+.security-note{margin-top:16px;padding:12px 14px;border:1px solid #a7f3d0;background:#ecfdf5;color:#166534;border-radius:12px;font-size:12px;line-height:1.5}
+.query-row{display:flex;gap:9px;margin-top:19px}.query-row input{flex:1;padding:13px 14px;border:1px solid #cbd5e1;border-radius:12px;font-size:14px;outline:none}.query-row input:focus{border-color:#6366f1;box-shadow:0 0 0 3px #e0e7ff}
+.query-row button{padding:0 22px;border:0;border-radius:12px;background:#4f46e5;color:white;font-weight:850;cursor:pointer}.query-row button:disabled{opacity:.55;cursor:wait}
+.examples{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.chip{border:1px solid #cbd5e1;background:#f8fafc;color:#475569;border-radius:999px;padding:7px 10px;font-size:11px;cursor:pointer}
+.results{margin-top:18px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:16px;padding:18px}
+.result-head{display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid #e2e8f0;padding-bottom:10px;font-size:13px;font-weight:850}
+.badge{font-size:10px;font-weight:900;border-radius:999px;padding:5px 8px;background:#dcfce7;color:#166534}.badge.warn{background:#fef3c7;color:#92400e}
+.answer{background:#eef2ff;border:1px solid #c7d2fe;border-radius:12px;padding:14px;margin-top:13px;white-space:pre-wrap;line-height:1.58;font-size:13px}
+.section-title{font-size:12px;font-weight:850;margin:15px 0 8px}
+.sources{display:grid;gap:9px}.source{background:white;border:1px solid #e2e8f0;border-radius:11px;padding:12px}.source-top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.source a{color:#3730a3;font-weight:850;text-decoration:none;font-size:11px}.chunk{font-family:ui-monospace,monospace;color:#64748b;font-size:9px}.source p{font-size:11px;color:#64748b;line-height:1.55;margin-top:6px}
+.warning{margin-top:13px;background:#fffbeb;border:1px solid #fde68a;color:#92400e;border-radius:11px;padding:11px 12px;font-size:11px;line-height:1.5}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px}.metric{background:white;border:1px solid #e2e8f0;border-radius:12px;padding:12px}.metric strong{display:block;font-size:16px}.metric span{font-size:10px;color:#64748b}
+.error{margin-top:13px;background:#fff1f2;border:1px solid #fecdd3;color:#9f1239;border-radius:11px;padding:12px;font-size:12px}
+.loading{color:#4338ca;font-weight:800;font-size:12px}
+.foot{margin-top:15px;color:#64748b;font-size:10px;line-height:1.5}
+@media(max-width:850px){.layout{grid-template-columns:1fr}.sidebar{display:none}.head{flex-direction:column}.access{width:100%}.metrics{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.query-row{flex-direction:column}.query-row button{height:44px}.metrics{grid-template-columns:1fr 1fr}.topbar-inner{align-items:flex-start}}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <section class="banner">
-    <div class="kicker">DEMO PÚBLICA SEGURA · PROYECTO ACADÉMICO</div>
-    <h1>Asistente RAG de Salvaguardas GLF</h1>
-    <p>Consulta únicamente documentos oficiales publicados por el Galápagos Life Fund. Esta demo corre en infraestructura aislada y no tiene acceso a la computadora, discos ni archivos privados del equipo.</p>
-  </section>
-  <div class="notice"><strong>Privacidad:</strong> no se permiten cargas de archivos, no se expone el corpus privado y las consultas no se guardan en la aplicación. Las respuestas son asistencia documental y deben verificarse en la fuente original.</div>
-  <section class="card">
-    <div class="row">
-      <input id="q" maxlength="600" placeholder="Escribe una pregunta sobre el SGAS del GLF">
-      <button id="go">Consultar</button>
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="mark">GLF</div>
+      <div><div class="brand-title">Portal de Salvaguardas · Demo académica</div><div class="brand-sub">Consulta documental pública · RAG</div></div>
     </div>
-    <div class="row" style="margin-top:10px">
-      <input id="key" type="password" autocomplete="off" placeholder="Código de acceso de la demo">
-      <button id="savekey" type="button" style="background:#0f766e">Guardar código</button>
-    </div>
-    <div class="examples">
-      <button class="chip">¿Qué instrumentos ambientales y sociales son obligatorios para todos los proyectos?</button>
-      <button class="chip">¿Qué debe hacer el GLF durante la evaluación de la detección?</button>
-      <button class="chip">¿Qué diferencia existe entre proyectos de Categoría B y C?</button>
-    </div>
-    <div id="out"></div>
-    <div class="footer">Fuentes: documentos públicos oficiales del GLF descargados desde galapagoslifefund.org.ec al iniciar el servicio. Generación mediante Hugging Face Inference Providers. Límite de consultas para evitar abuso.</div>
-  </section>
+    <div class="secure">✓ Demo aislada de la PC</div>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="nav-title">PANEL PERSONAL GLF</div>
+    <div class="nav-item">1. Inicio Técnico / Dashboard</div>
+    <div class="nav-item">2. Convocatorias</div>
+    <div class="nav-item">3. Revisión Técnica</div>
+    <div class="nav-item active">6. Asistente RAG</div>
+    <div class="nav-item">7. Reportes</div>
+    <div class="nav-item">8. Auditoría</div>
+  </aside>
+
+  <main class="main">
+    <section class="card">
+      <div class="head">
+        <div>
+          <span class="label">Asistente RAG GLF · Demo pública segura</span>
+          <h1>Consulta Inteligente del Corpus Normativo GLF</h1>
+          <p class="muted">Misma experiencia del prototipo local, pero esta versión usa exclusivamente documentos oficiales públicos del GLF y corre fuera de tu computadora.</p>
+        </div>
+        <div class="access">
+          <input id="key" type="password" autocomplete="off" placeholder="Código de acceso">
+          <button id="savekey" type="button">Guardar código en esta pestaña</button>
+        </div>
+      </div>
+
+      <div class="security-note"><strong>Seguridad:</strong> no se permiten archivos, el corpus privado no está en la nube, la aplicación no tiene conexión con tu PC y existe un límite global diario de consultas para evitar abuso económico.</div>
+
+      <div class="metrics">
+        <div class="metric"><strong>83,6%</strong><span>Recall@5 desarrollo</span></div>
+        <div class="metric"><strong>90,9%</strong><span>Recall@5 validation</span></div>
+        <div class="metric"><strong>4,617 s</strong><span>p95 versión local</span></div>
+        <div class="metric"><strong>Top 5</strong><span>BM25-heading-authority-v2</span></div>
+      </div>
+
+      <div class="query-row">
+        <input id="q" maxlength="600" value="¿Cuáles son las actividades no subvencionables según la Lista de Exclusión del GLF?">
+        <button id="go">Consultar Corpus</button>
+      </div>
+      <div class="examples">
+        <button class="chip">¿Qué instrumentos ambientales y sociales son obligatorios para todos los proyectos?</button>
+        <button class="chip">¿Qué debe hacer el GLF durante la evaluación de la detección?</button>
+        <button class="chip">¿Qué diferencia existe entre los proyectos de Categoría B y Categoría C?</button>
+      </div>
+
+      <div id="out" class="results">
+        <div class="result-head"><span>Asistente RAG conectado</span><span class="badge">Corpus público GLF</span></div>
+        <p class="muted" style="margin-top:12px">Escribe una consulta. La respuesta mostrará evidencia, página y enlace al PDF oficial cuando exista soporte documental.</p>
+        <div class="warning"><strong>Aviso Técnico:</strong> esta herramienta apoya la consulta documental. No aprueba, rechaza ni determina elegibilidad de postulaciones.</div>
+      </div>
+
+      <div class="foot">La demo pública puede tener latencia distinta a la versión local porque la generación se ejecuta mediante un proveedor remoto. Los KPI formales del proyecto corresponden a la versión local evaluada y documentada.</div>
+    </section>
+  </main>
 </div>
+
 <script>
 const q=document.getElementById('q'), go=document.getElementById('go'), out=document.getElementById('out');
 const key=document.getElementById('key'), savekey=document.getElementById('savekey');
 key.value=sessionStorage.getItem('glf_demo_key')||'';
-savekey.onclick=()=>{sessionStorage.setItem('glf_demo_key',key.value.trim());savekey.textContent='Guardado'};
+savekey.onclick=()=>{sessionStorage.setItem('glf_demo_key',key.value.trim());savekey.textContent='Código guardado ✓'};
 document.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{q.value=b.textContent;q.focus()});
-function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 async function ask(){
-  const query=q.value.trim(); if(!query)return;
-  go.disabled=true; go.textContent='Consultando…'; out.innerHTML='';
+  const query=q.value.trim();
+  if(query.length<3){out.innerHTML='<div class="error">Escribe al menos 3 caracteres.</div>';return}
+  const demoKey=(sessionStorage.getItem('glf_demo_key')||key.value||'').trim();
+  if(!demoKey){out.innerHTML='<div class="error">Introduce primero el código de acceso de la demo.</div>';return}
+  go.disabled=true;go.textContent='Consultando…';
+  out.innerHTML='<div class="loading">Buscando evidencia pública y generando respuesta…</div>';
   try{
-    const demoKey=(sessionStorage.getItem('glf_demo_key')||key.value||'').trim();
-    const r=await fetch('/api/ask',{method:'POST',headers:{'Content-Type':'application/json','X-Demo-Key':demoKey},body:JSON.stringify({query})});
-    const d=await r.json(); if(!r.ok)throw new Error(d.error||'Error');
-    const ok=d.generated && (d.sources||[]).length>0;
-    const ms=((d.timings||{}).total_seconds||0).toFixed(2);
-    let html='<div class="result"><div class="status"><strong>Respuesta</strong><span class="badge '+(ok?'':'warn')+'">'+(ok?'Con evidencia':'Abstención segura')+' · '+ms+' s</span></div>';
-    html+='<div class="answer">'+esc(d.answer)+'</div>';
-    if(ok){
-      html+='<div class="sources">';
-      (d.results||[]).slice(0,4).forEach(x=>{
-        html+='<div class="source"><a target="_blank" rel="noopener noreferrer" href="'+esc(x.source_url)+'">'+esc(x.source_name||x.document_id)+'</a> · pág. '+esc(x.page)+'<p>'+esc((x.text||'').slice(0,520))+'</p></div>'
-      });
-      html+='</div>';
-    }
-    html+='</div>'; out.innerHTML=html;
-  }catch(e){out.innerHTML='<div class="error">'+esc(e.message||'No disponible')+'</div>'}
-  finally{go.disabled=false;go.textContent='Consultar'}
+    const r=await fetch('/api/ask',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-Demo-Key':demoKey},
+      body:JSON.stringify({query})
+    });
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.error||('Error HTTP '+r.status));
+    const grounded=Boolean(d.generated&&(d.sources||[]).length);
+    const total=Number(d.timings?.total_seconds||0).toFixed(2);
+    const remaining=Number.isFinite(Number(d.quota_remaining_today))?Number(d.quota_remaining_today):null;
+    const evidence=grounded?(d.results||[]).slice(0,4):[];
+    const sources=evidence.length?evidence.map((x,i)=>`
+      <div class="source">
+        <div class="source-top">
+          <a href="${esc(x.source_url)}" target="_blank" rel="noopener noreferrer">Fuente ${i+1}: ${esc(x.source_name||x.document_id)} · pág. ${esc(x.page)}</a>
+          <span class="chunk">${esc(x.chunk_id)}</span>
+        </div>
+        <p>${esc((x.text||'').slice(0,700))}${(x.text||'').length>700?'…':''}</p>
+      </div>`).join(''):'<p class="muted">No se muestran fragmentos porque el sistema se abstuvo.</p>';
+    out.innerHTML=`
+      <div class="result-head">
+        <span>Respuesta del Asistente RAG</span>
+        <div><span class="badge ${grounded?'':'warn'}">${grounded?'Respuesta generada con evidencia':'Abstención segura'}</span> <span class="muted">${total} s</span></div>
+      </div>
+      <div class="answer">${esc(d.answer)}</div>
+      <div class="section-title">${grounded?'Evidencia recuperada':'Evidencia no suficiente'}</div>
+      <div class="sources">${sources}</div>
+      <div class="warning"><strong>Aviso Técnico:</strong> verifica las fuentes antes de tomar una decisión institucional.${remaining===null?'':' Consultas globales restantes hoy: '+remaining+'.'}</div>`;
+  }catch(e){
+    out.innerHTML='<div class="error"><strong>No se pudo completar la consulta.</strong><br>'+esc(e.message||'Servicio no disponible')+'</div>';
+  }finally{go.disabled=false;go.textContent='Consultar Corpus'}
 }
-go.onclick=ask;q.addEventListener('keydown',e=>{if(e.key==='Enter')ask()});
+go.onclick=ask;
+q.addEventListener('keydown',e=>{if(e.key==='Enter')ask()});
 </script>
 </body>
 </html>"""
