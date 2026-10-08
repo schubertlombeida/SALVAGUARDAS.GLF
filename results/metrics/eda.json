@@ -1,0 +1,39 @@
+{
+  "documents": 56,
+  "projects": 26,
+  "chunks": 250,
+  "document_words": 147470,
+  "roles": {
+    "evaluacion_administrativa": 1,
+    "nota_contexto": 1,
+    "pgas_esmp": 1,
+    "propuesta": 26,
+    "screening": 27
+  },
+  "languages": {
+    "en": 30,
+    "es": 26
+  },
+  "groups": {
+    "control_vigilancia": 2,
+    "educacion": 24,
+    "medianos_grandes": 30
+  },
+  "project_splits": {
+    "desarrollo": 18,
+    "prueba": 4,
+    "validacion": 4
+  },
+  "chunk_splits": {
+    "contexto": 62,
+    "desarrollo": 128,
+    "prueba": 31,
+    "validacion": 29
+  },
+  "chunk_lengths": {
+    "1-249": 16,
+    "250-499": 24,
+    "500-749": 16,
+    "750 o más": 194
+  }
+}

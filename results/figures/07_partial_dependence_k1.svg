@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="460" viewBox="0 0 760 460">
+<rect width="100%" height="100%" fill="white"/>
+<text x="380" y="28" text-anchor="middle" font-size="20" font-weight="bold">Dependencia parcial: k1</text>
+<g><line x1="75" x2="730" y1="366.07142857142856" y2="366.07142857142856" stroke="#ddd"/><text x="65" y="370.07142857142856" text-anchor="end" font-size="12">70%</text></g><g><line x1="75" x2="730" y1="246.42857142857142" y2="246.42857142857142" stroke="#ddd"/><text x="65" y="250.42857142857142" text-anchor="end" font-size="12">75%</text></g><g><line x1="75" x2="730" y1="126.78571428571428" y2="126.78571428571428" stroke="#ddd"/><text x="65" y="130.78571428571428" text-anchor="end" font-size="12">80%</text></g><line x1="75" x2="730" y1="126.78571428571428" y2="126.78571428571428" stroke="black" stroke-dasharray="6 5"/><text x="725" y="119.78571428571428" text-anchor="end" font-size="12">meta 80%</text>
+<line x1="75" y1="390" x2="730" y2="390" stroke="black"/>
+<line x1="75" y1="55" x2="75" y2="390" stroke="black"/>
+<path d="M 75.0 167.8 L 293.3 153.7 L 511.7 159.3 L 730.0 177.3" fill="none" stroke="black" stroke-width="2.5"/><circle cx="75.0" cy="167.8" r="5" fill="white" stroke="black"/><circle cx="293.3" cy="153.7" r="5" fill="white" stroke="black"/><circle cx="511.7" cy="159.3" r="5" fill="white" stroke="black"/><circle cx="730.0" cy="177.3" r="5" fill="white" stroke="black"/><text x="75.0" y="414" text-anchor="middle" font-size="13">0.6</text><text x="293.3" y="414" text-anchor="middle" font-size="13">0.8</text><text x="511.7" y="414" text-anchor="middle" font-size="13">1</text><text x="730.0" y="414" text-anchor="middle" font-size="13">1.2</text>
+<text x="380" y="442" text-anchor="middle" font-size="14">k1</text>
+<text transform="translate(18 230) rotate(-90)" text-anchor="middle" font-size="14">Recall@5 medio en desarrollo (%)</text>
+</svg>

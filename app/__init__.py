@@ -1,0 +1,1 @@
+"""Interfaz local GLF."""

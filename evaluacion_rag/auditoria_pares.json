@@ -1,0 +1,25 @@
+{
+  "pairs": 316,
+  "unique_questions": 50,
+  "unique_chunks": 58,
+  "unique_documents": 13,
+  "label_counts": {
+    "1": 66,
+    "0": 250
+  },
+  "split_counts": {
+    "train": 173,
+    "validation": 70,
+    "test": 73
+  },
+  "hard_candidate_count": 147,
+  "document_disjoint": true,
+  "chunk_disjoint": true,
+  "query_disjoint": true,
+  "near_duplicate_method": "TF-IDF carácter n-gramas 3-5, coseno, comparación entre particiones",
+  "near_duplicate_threshold": 0.85,
+  "near_duplicate_count": 0,
+  "max_cross_split_cosine": 0.6434687186637287,
+  "labels_ai_only": true,
+  "hard_negatives_human_verified": false
+}
