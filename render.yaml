@@ -4,7 +4,7 @@ services:
     runtime: python
     plan: free
     branch: deploy/secure-public-demo
-    buildCommand: pip install -r public_demo/requirements.txt
+    buildCommand: pip install -r public_demo/requirements.txt && python -m py_compile public_demo/app.py && python -m public_demo.smoke_test
     startCommand: gunicorn public_demo.app:app --workers 1 --threads 4 --timeout 90
     healthCheckPath: /healthz
     autoDeploy: false
