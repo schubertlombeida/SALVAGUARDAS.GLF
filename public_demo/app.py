@@ -186,6 +186,14 @@ def _rate_limited():
     return False
 
 
+def _authorized():
+    expected = os.getenv("DEMO_ACCESS_CODE", "").strip()
+    if not expected:
+        return False
+    supplied = request.headers.get("X-Demo-Key", "").strip()
+    return supplied == expected
+
+
 def _safe_query():
     payload = request.get_json(silent=True) or {}
     query = str(payload.get("query", "")).strip()
@@ -335,6 +343,9 @@ def healthz():
 def api_search():
     if _rate_limited():
         return jsonify({"error": "Límite temporal de consultas alcanzado."}), 429
+    if not _authorized():
+        return jsonify({"error": "Código de acceso inválido."}), 401
+        return jsonify({"error": "Límite temporal de consultas alcanzado."}), 429
     query, error = _safe_query()
     if error:
         message, status = error
@@ -367,6 +378,8 @@ def api_search():
 def api_ask():
     if _rate_limited():
         return jsonify({"error": "Límite temporal de consultas alcanzado."}), 429
+    if not _authorized():
+        return jsonify({"error": "Código de acceso inválido."}), 401
 
     query, error = _safe_query()
     if error:
@@ -454,6 +467,10 @@ INDEX_HTML = r"""<!doctype html>
       <input id="q" maxlength="600" placeholder="Escribe una pregunta sobre el SGAS del GLF">
       <button id="go">Consultar</button>
     </div>
+    <div class="row" style="margin-top:10px">
+      <input id="key" type="password" autocomplete="off" placeholder="Código de acceso de la demo">
+      <button id="savekey" type="button" style="background:#0f766e">Guardar código</button>
+    </div>
     <div class="examples">
       <button class="chip">¿Qué instrumentos ambientales y sociales son obligatorios para todos los proyectos?</button>
       <button class="chip">¿Qué debe hacer el GLF durante la evaluación de la detección?</button>
@@ -465,13 +482,17 @@ INDEX_HTML = r"""<!doctype html>
 </div>
 <script>
 const q=document.getElementById('q'), go=document.getElementById('go'), out=document.getElementById('out');
+const key=document.getElementById('key'), savekey=document.getElementById('savekey');
+key.value=sessionStorage.getItem('glf_demo_key')||'';
+savekey.onclick=()=>{sessionStorage.setItem('glf_demo_key',key.value.trim());savekey.textContent='Guardado'};
 document.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{q.value=b.textContent;q.focus()});
 function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 async function ask(){
   const query=q.value.trim(); if(!query)return;
   go.disabled=true; go.textContent='Consultando…'; out.innerHTML='';
   try{
-    const r=await fetch('/api/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query})});
+    const demoKey=(sessionStorage.getItem('glf_demo_key')||key.value||'').trim();
+    const r=await fetch('/api/ask',{method:'POST',headers:{'Content-Type':'application/json','X-Demo-Key':demoKey},body:JSON.stringify({query})});
     const d=await r.json(); if(!r.ok)throw new Error(d.error||'Error');
     const ok=d.generated && (d.sources||[]).length>0;
     const ms=((d.timings||{}).total_seconds||0).toFixed(2);
