@@ -2136,10 +2136,14 @@ Entregable: 1 Manual de Buenas Prácticas de Monitoreo Comunitario publicado y e
           throw new Error(data.error || `Error HTTP ${response.status}`);
         }
 
-        const answer = escapeRAGHtml(data.answer || 'Sin respuesta disponible.').replaceAll('\n', '<br>');
+        const rawAnswer = data.answer || 'Sin respuesta disponible.';
+        const answer = escapeRAGHtml(rawAnswer).replaceAll('\n', '<br>');
+        const isInsufficient = rawAnswer.toLowerCase().includes('documentación recuperada es insuficiente');
         const sourceMap = new Map((data.sources || []).map(s => [s.chunk_id, s]));
         const citedResults = (data.results || []).filter(r => sourceMap.has(r.chunk_id));
-        const displayRows = citedResults.length ? citedResults : (data.results || []).slice(0, 5);
+        const displayRows = citedResults.length
+          ? citedResults
+          : (isInsufficient ? [] : (data.results || []).slice(0, 5));
 
         const sourcesHtml = displayRows.length
           ? displayRows.map((row, index) => `
@@ -2161,7 +2165,8 @@ Entregable: 1 Manual de Buenas Prácticas de Monitoreo Comunitario publicado y e
           : '<div class="text-slate-500">No se devolvieron fragmentos de evidencia.</div>';
 
         const total = Number(data.timings?.total_seconds || 0);
-        const generatedLabel = data.generated
+        const grounded = data.generated && !isInsufficient && (data.sources || []).length > 0;
+        const generatedLabel = grounded
           ? '<span class="text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full font-bold">Respuesta generada con evidencia</span>'
           : '<span class="text-amber-700 bg-amber-100 px-2.5 py-0.5 rounded-full font-bold">Abstención segura</span>';
 
@@ -2177,7 +2182,7 @@ Entregable: 1 Manual de Buenas Prácticas de Monitoreo Comunitario publicado y e
             ${answer}
           </div>
           <div>
-            <h4 class="font-bold text-slate-900 mb-2">Evidencia recuperada</h4>
+            <h4 class="font-bold text-slate-900 mb-2">${isInsufficient ? 'Evidencia no suficiente' : 'Evidencia recuperada'}</h4>
             <div class="space-y-3">${sourcesHtml}</div>
           </div>
           <div class="text-[11px] text-amber-800 bg-amber-50 p-3 rounded-xl border border-amber-200">
@@ -2189,10 +2194,10 @@ Entregable: 1 Manual de Buenas Prácticas de Monitoreo Comunitario publicado y e
 
         showAlert(
           'Consulta RAG completada',
-          data.generated
+          grounded
             ? 'La respuesta fue generada a partir de evidencia recuperada del corpus.'
             : 'El sistema se abstuvo porque la evidencia recuperada fue insuficiente.',
-          data.generated ? 'success' : 'info'
+          grounded ? 'success' : 'info'
         );
       } catch (error) {
         box.innerHTML = `
