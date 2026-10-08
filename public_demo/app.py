@@ -345,7 +345,6 @@ def api_search():
         return jsonify({"error": "Límite temporal de consultas alcanzado."}), 429
     if not _authorized():
         return jsonify({"error": "Código de acceso inválido."}), 401
-        return jsonify({"error": "Límite temporal de consultas alcanzado."}), 429
     query, error = _safe_query()
     if error:
         message, status = error
