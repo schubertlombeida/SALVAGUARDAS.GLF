@@ -16,4 +16,6 @@ services:
       - key: HF_MODEL
         value: Qwen/Qwen2.5-7B-Instruct-1M:fastest
       - key: RATE_LIMIT_PER_HOUR
-        value: "30"
+        value: "15"
+      - key: GLOBAL_DAILY_LIMIT
+        value: "60"
