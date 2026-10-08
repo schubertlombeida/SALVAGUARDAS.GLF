@@ -100,6 +100,47 @@ class LocalChatTests(unittest.TestCase):
         self.assertIn('[DOC::0001]', answer)
         self.assertEqual(sources[0]['chunk_id'], 'DOC::0001')
 
+    def test_citation_only_answer_gets_content_retry(self):
+        responses = iter([
+            FakeResponse('[DOC::0001]'),
+            FakeResponse('El plan incluye participación de la comunidad. [DOC::0001]'),
+        ])
+
+        with patch('app.ollama.urlopen', side_effect=lambda *args, **kwargs: next(responses)):
+            answer, sources = generate_answer('¿Qué debe hacer el plan?', [ROW])
+
+        self.assertIn('participación', answer)
+        self.assertIn('[DOC::0001]', answer)
+        self.assertEqual(sources[0]['chunk_id'], 'DOC::0001')
+
+    def test_category_comparison_requires_explicit_categories(self):
+        row = {
+            'chunk_id': 'DOC::0001',
+            'document_id': 'DOC',
+            'text': (
+                'Los proyectos B requieren evaluación ajustada a sus riesgos. '
+                'Los proyectos C normalmente no requieren evaluación completa.'
+            ),
+            'language': 'es',
+        }
+        responses = iter([
+            FakeResponse('Las diferencias dependen del nivel de riesgo. [DOC::0001]'),
+            FakeResponse(
+                'Categoría B: requiere evaluación ajustada a sus riesgos. [DOC::0001]\n'
+                'Categoría C: normalmente no requiere evaluación completa. [DOC::0001]'
+            ),
+        ])
+
+        with patch('app.ollama.urlopen', side_effect=lambda *args, **kwargs: next(responses)):
+            answer, sources = generate_answer(
+                '¿Qué diferencia existe entre los proyectos de Categoría B y Categoría C?',
+                [row],
+            )
+
+        self.assertIn('Categoría B', answer)
+        self.assertIn('Categoría C', answer)
+        self.assertEqual(sources[0]['chunk_id'], 'DOC::0001')
+
     def test_source_footnote_is_not_treated_as_chunk_citation(self):
         response = FakeResponse('Respuesta basada en la fuente [^8] [DOC::0001]')
         with patch('app.ollama.urlopen', return_value=response):
