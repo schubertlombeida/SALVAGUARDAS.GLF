@@ -159,6 +159,108 @@ Resultado esperado en la versión validada:
 
 ---
 
+# Página web: qué usar y qué puede modificar
+
+La página web **ya está hecha y conectada al RAG**.
+
+## Versión local completa
+
+Archivo principal:
+
+`app/index.html`
+
+Servidor:
+
+`app/server.py`
+
+Endpoint del RAG:
+
+`POST /api/ask`
+
+Esta es la versión que se probó localmente y que muestra:
+
+- caja de consulta;
+- botón **Consultar Corpus**;
+- respuesta del asistente;
+- citas;
+- evidencia recuperada;
+- tiempo de respuesta;
+- abstención segura;
+- aviso técnico.
+
+Por tanto, no es necesario diseñar una nueva página para que el sistema funcione.
+
+## ¿Puede usar su propia página?
+
+Sí.
+
+Puede modificar estilos, colores, menús, textos o incluso usar una página propia, siempre que conserve la conexión con el backend.
+
+La petición mínima debe seguir este formato:
+
+```javascript
+fetch('/api/ask', {
+  method: 'POST',
+  headers: {'Content-Type': 'application/json'},
+  body: JSON.stringify({query: 'pregunta del usuario'})
+})
+```
+
+La respuesta del backend contiene, entre otros:
+
+- `answer`
+- `sources`
+- `results`
+- `timings`
+- `generated`
+
+Su página puede mostrar esos datos como quiera.
+
+## Qué NO conviene modificar
+
+No cambiar sin una razón clara:
+
+- `src/retrieval_optimized.py`
+- hiperparámetros del BM25;
+- validación de citas;
+- lógica de abstención;
+- estructura del corpus;
+- tests;
+- métricas finales.
+
+Si cambia alguno de esos componentes, habría que repetir evaluación.
+
+## Para la demo pública
+
+La rama:
+
+`deploy/secure-public-demo`
+
+ya tiene una interfaz preparada para Render.
+
+Esa versión además usa:
+
+- código de acceso;
+- límite por IP;
+- límite diario global;
+- documentos públicos;
+- Hugging Face para generación.
+
+Si se quiere cambiar el diseño visual de la demo pública, hacerlo únicamente en el HTML/CSS/JS dentro de:
+
+`public_demo/app.py`
+
+sin modificar la lógica de seguridad ni los endpoints.
+
+En resumen:
+
+```text
+Diseño visual: se puede cambiar
+RAG / BM25 / métricas / seguridad: no tocar
+```
+
+---
+
 # 2. Qué contiene GitHub
 
 La rama `main` contiene la versión académica completa:
