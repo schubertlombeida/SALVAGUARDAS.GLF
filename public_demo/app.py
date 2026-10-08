@@ -1,3 +1,4 @@
+import hmac
 import io
 import json
 import os
@@ -196,7 +197,7 @@ def _authorized():
     if not expected:
         return False
     supplied = request.headers.get("X-Demo-Key", "").strip()
-    return supplied == expected
+    return bool(supplied) and hmac.compare_digest(supplied, expected)
 
 
 def _take_global_daily_slot():
