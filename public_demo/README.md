@@ -14,7 +14,7 @@ Esta carpeta contiene una variante aislada para publicación académica.
 
 ## Fuentes públicas
 
-Los PDFs se descargan directamente de `galapagoslifefund.org.ec` al iniciar el servicio. La lista es fija en `PUBLIC_DOCS` y no se acepta una URL proporcionada por el usuario.
+Los PDFs se descargan directamente de `galapagoslifefund.org.ec` al iniciar el servicio. La lista es fija en `PUBLIC_DOCS` y no se acepta una URL proporcionada por el usuario. Las fuentes públicas fueron verificadas contra la página oficial del SGAS del GLF antes de preparar el despliegue.
 
 ## Despliegue en Render
 
@@ -23,7 +23,7 @@ Los PDFs se descargan directamente de `galapagoslifefund.org.ec` al iniciar el s
 3. Seleccionar la rama `deploy/secure-public-demo`.
 4. Build command:
    ```
-   pip install -r public_demo/requirements.txt
+   pip install -r public_demo/requirements.txt && python -m py_compile public_demo/app.py && python -m public_demo.smoke_test
    ```
 5. Start command:
    ```
