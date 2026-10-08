@@ -225,6 +225,44 @@ def _citation_state(answer, allowed):
     return 'valid', cited
 
 
+def _answer_quality_problem(question, answer):
+    """Detecta respuestas formalmente citadas pero inutiles o incompletas."""
+    cited_lines = [
+        line.strip()
+        for line in answer.splitlines()
+        if CHUNK_CITATION_RE.search(line)
+    ]
+    supported_text = ' '.join(
+        CHUNK_CITATION_RE.sub('', line) for line in cited_lines
+    ).strip()
+
+    # Evita respuestas que terminan mostrando unicamente el identificador.
+    if not re.search(r'[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]{3,}', supported_text):
+        return 'citation_only'
+
+    categories = set(
+        re.findall(r'categor[ií]a\s+([a-z])\b', question.casefold())
+    )
+    comparison = len(categories) >= 2 and bool(
+        re.search(r'diferenc|compar|\bvs\b|\bentre\b', question.casefold())
+    )
+    if comparison:
+        lowered = supported_text.casefold()
+        for letter in categories:
+            if not (
+                re.search(r'categor[ií]a\s+' + re.escape(letter) + r'\b', lowered)
+                or re.search(
+                    r'\b(?:proyectos?|los|las)\s+'
+                    + re.escape(letter)
+                    + r'\b',
+                    lowered,
+                )
+            ):
+                return 'comparison_missing_categories'
+
+    return None
+
+
 def generate_answer(question, rows):
     base = os.getenv('GLF_OLLAMA_URL', 'http://127.0.0.1:11434').rstrip('/')
     parsed = urlsplit(base)
@@ -354,6 +392,11 @@ def generate_answer(question, rows):
         "o explicaciones causales. "
         "Cita junto a cada afirmación o grupo de elementos el CHUNK_ID exacto que la sustenta, entre "
         "corchetes; si usas dos fragmentos, cita ambos donde corresponda. "
+        "Cada oración o viñeta con una afirmación debe terminar con su cita en ESA MISMA LÍNEA. "
+        "Nunca pongas el CHUNK_ID solo en una línea separada y nunca respondas únicamente con una cita. "
+        "Si la pregunta compara categorías, nombra explícitamente cada categoría y explica diferencias "
+        "concretas respaldadas por el contexto. Si pregunta qué debe hacer, qué acciones realizar o qué "
+        "pasos seguir, enumera las acciones concretas respaldadas por el contexto. "
         "No copies marcas de nota al pie como [^8] o [^17]: no son citas del asistente. "
         "Si no hay evidencia suficiente, di que la documentación recuperada es insuficiente y no cites "
         "documentos irrelevantes."
@@ -363,27 +406,50 @@ def generate_answer(question, rows):
 
     answer = _call_ollama(base, model, prompt)
     state, cited = _citation_state(answer, allowed)
+    quality_problem = (
+        _answer_quality_problem(question, answer)
+        if state == 'valid'
+        else None
+    )
 
-    # Si Qwen fallo solo en el formato de la cita, se permite un reintento
-    # controlado con la misma evidencia. No se recuperan nuevos chunks.
-    if state == 'invalid':
+    # Un unico reintento controlado si la cita es invalida o la respuesta
+    # formalmente citada no contiene una respuesta util. Se usa exactamente
+    # la misma evidencia recuperada; no se cambian ranking ni parametros.
+    if state == 'invalid' or quality_problem:
         allowed_text = ' '.join(
             f'[{chunk_id}]' for chunk_id in sorted(allowed)
         )
+        quality_instruction = ''
+        if quality_problem == 'citation_only':
+            quality_instruction = (
+                ' La respuesta anterior quedó sin contenido útil. Explica la respuesta '
+                'con texto concreto y coloca la cita al final de la misma línea.'
+            )
+        elif quality_problem == 'comparison_missing_categories':
+            quality_instruction = (
+                ' La respuesta anterior no explicitó la comparación. Nombra cada '
+                'categoría solicitada y explica al menos una diferencia concreta para cada una.'
+            )
         retry_prompt = (
             prompt
-            + "\n\nCORRECCION DE FORMATO: Reescribe la respuesta de forma breve. "
+            + "\n\nCORRECCION DE RESPUESTA: Reescribe la respuesta de forma breve pero completa. "
             + "Solo puedes citar uno o más de estos identificadores exactos: "
             + allowed_text
-            + ". Debes incluir al menos una cita exacta si respondes. "
+            + ". Cada afirmación debe llevar su cita exacta al final de ESA MISMA LÍNEA. "
             + "No uses notas al pie [^n] como citas."
+            + quality_instruction
         )
         answer = _call_ollama(base, model, retry_prompt)
         state, cited = _citation_state(answer, allowed)
+        quality_problem = (
+            _answer_quality_problem(question, answer)
+            if state == 'valid'
+            else None
+        )
 
-    # Ante un segundo fallo de formato, degradar de forma segura en vez de
-    # devolver HTTP 503. La calidad queda separada del KPI de disponibilidad.
-    if state in ('insufficient', 'invalid'):
+    # Ante un segundo fallo, abstenerse de forma segura en vez de mostrar
+    # una cita sola o una comparación que no responde la pregunta.
+    if state in ('insufficient', 'invalid') or quality_problem:
         return (
             'La documentación recuperada es insuficiente para responder esta pregunta.',
             [],
