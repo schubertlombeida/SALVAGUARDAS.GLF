@@ -1,90 +1,74 @@
-# Evaluación y optimización del RAG — gold operativo v2
+# Evaluación del RAG — versión final académica
 
-## Estado
+## Sistema evaluado
 
-El asistente GLF usa un recuperador optimizado reproducible denominado
-`BM25-heading-authority-v2`. La selección se realizó exclusivamente con
-train y validation; test no se utilizó para escoger modelo ni parámetros.
+Recuperador: **BM25-heading-authority-v2**  
+Corpus: **585 fragmentos normativos en español**  
+Generador: **Qwen 2.5 7B local vía Ollama**  
+Top-k: **5**
 
-## Corpus y gold
+La selección de parámetros se realizó solo con train y validation. El test histórico no se utilizó para escoger la configuración.
 
-- Corpus normativo: 36 documentos y 585 fragmentos en español.
-- SHA-256 del corpus: `37c8a747c32c069642f501ef967c9119175a3da7e8b71d14f2910118d3e11267`.
-- Gold operativo v2: 50 preguntas y 82 relaciones relevantes.
-- SHA-256 del gold v2: `f3421f2343f30930912c7499312fd2120b645b9c11b2e81632bc03bb62f21461`.
-- Negativos adjudicados en train/validation: 186.
-- Candidatos de test pendientes de adjudicación independiente: 60.
-
-Los archivos con texto completo del corpus y el gold operativo permanecen
-fuera del repositorio público.
-
-## Comparación
+## Resultados de recuperación
 
 | Método | Recall@5 train+validation |
 |---|---:|
-| BM25 baseline v2 | 68,9 % |
-| E5-base v2 (rankings congelados) | 61,8 % |
-| BM25 + E5 RRF v2 | 68,6 % |
-| Recuperador web previo | 70,2 % |
-| **BM25-heading-authority-v2** | **83,6 %** |
+| E5-base | 61.8% |
+| BM25 + E5 RRF | 68.6% |
+| BM25 baseline | 68.9% |
+| Recuperador web previo | 70.2% |
+| **BM25-heading-authority-v2** | **83.6%** |
 
-El método seleccionado obtiene:
+Configuración final:
 
-- Recall@5 train: **80,6 %**.
-- Recall@5 validation: **90,9 %**.
-- Recall@5 train+validation: **83,6 %**.
-- Hit@5 train+validation: **94,7 %**.
+- Recall@5 train: **80.6%**
+- Recall@5 validation: **90.9%**
+- Recall@5 desarrollo: **83.6%**
+- Hit@5 desarrollo: **94.7%**
+- MRR@5 desarrollo: **0.752**
 
-## Configuración
+## Auditoría post-congelamiento
 
-- BM25 de cuerpo: k1=0,8; b=0,2.
-- BM25 de encabezados: k1=1,2; b=0,3.
-- Peso adicional de encabezados: 0,30.
-- Prioridad pequeña para fuente GLF: 0,15.
-- Top-k: 5.
+Después de congelar el recuperador se evaluó un holdout nuevo de 20 preguntas:
 
-No contiene excepciones por `question_id`, respuestas fijas ni IDs de chunks.
-La idea es dar mayor valor a encabezados normativos informativos y a la fuente
-primaria GLF sin excluir las referencias internacionales.
+- Recall@5: **85.0%**
+- Hit@5: **85.0%**
 
-Varias configuraciones cercanas también superaron 80 % simultáneamente en
-train y validation, por lo que el resultado no depende de un único punto
-aislado de la rejilla.
+Las preguntas y respuestas de referencia fueron pre-revisadas por IA y confirmadas por el usuario. Por transparencia, este resultado se reporta como auditoría post-congelamiento y **no** como validación humana independiente.
 
-## Integración
+## Latencia extremo a extremo
 
-La aplicación local carga `src/retrieval_optimized.py` desde
-`app/server.py`. Se conserva el recuperador BM25 original para reproducir
-baselines históricos.
+Benchmark local:
 
-Las consultas que comparan varias categorías aplican únicamente un desempate
-genérico por cobertura de las categorías solicitadas. No se programa una
-respuesta particular para A, B o C.
+- consultas: 40;
+- calentamiento excluido: 3;
+- exitosas: 40/40;
+- fallos HTTP: 0;
+- abstenciones seguras: 2;
+- p50: **1.815 s**;
+- p95: **4.617 s**;
+- meta: **p95 ≤7 s**;
+- resultado: **cumple**.
 
-## KPI de latencia
+El alcance de la medición fue `POST /api/ask`: recuperación + generación local. No incluye latencia de una red pública.
 
-La latencia de recuperación es del orden de milisegundos, pero esto no
-certifica la meta p95 <= 7 s del sistema completo.
+## Robustez funcional
 
-Para medir el KPI extremo a extremo con Ollama real se añadió:
+La interfaz se probó manualmente con consultas representativas y una pregunta fuera de dominio. La pregunta fuera del corpus produjo abstención segura en vez de inventar una respuesta.
 
-- `scripts/benchmark_e2e.py`
-- `scripts/run_local_final_validation.ps1`
+La suite automática actual obtuvo:
 
-El benchmark llama a `POST /api/ask` y mide recuperación + generación local
-con Qwen. Por defecto utiliza solamente train/validation y excluye el
-calentamiento.
+- **26 passed**
+- **2 skipped**
+- **0 failed**
 
-## Regla de cierre
+Los tests omitidos requieren CSV privados/locales de evaluación que no se publican.
 
-Antes de declarar el KPI final del proyecto:
+## Interpretación
 
-1. medir p95 extremo a extremo en el equipo de demostración;
-2. conservar la configuración seleccionada sin más ajuste por test;
-3. obtener una adjudicación independiente del holdout/test o construir un
-   holdout final nuevo y ciego;
-4. realizar una única evaluación final predefinida;
-5. documentar costo total frente al límite de USD 200.
+Los KPIs técnicos definidos para la entrega académica se cumplen:
 
-El 83,6 % actual demuestra cumplimiento de Recall@5 en desarrollo/validación,
-no una certificación independiente de producción.
+- Recall@5 ≥80%: cumplido.
+- p95 ≤7 s: cumplido.
+
+Esto no equivale a certificación institucional ni garantiza que cada respuesta sea completa. La herramienta requiere verificación de las fuentes por una persona autorizada.
