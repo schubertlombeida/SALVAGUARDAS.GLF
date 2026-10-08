@@ -237,7 +237,7 @@ def _answer_quality_problem(question, answer):
     ).strip()
 
     # Evita respuestas que terminan mostrando unicamente el identificador.
-    if not re.search(r'[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]{3,}', supported_text):
+    if not re.search(r'[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]{2,}', supported_text):
         return 'citation_only'
 
     categories = set(
