@@ -1,0 +1,4 @@
+Flask>=3.0,<4
+gunicorn>=22,<24
+pypdf>=5,<7
+numpy>=1.26,<3
